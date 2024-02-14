@@ -1,42 +1,72 @@
 \chapter{Meshless methods}\label{chap:lorem}
+\label{chap:meshless_methods}
 
 Meshless or Meshfree methods (MM) were developed to overcome the drawbacks of traditional mesh-based methods.
 They appeared for the first time in $1977$ with the Smooth Particle Hydrodynamics method~\cite{Belytschko:meshless_overview}, initially used to modeling astrophysical phenomena such as exploding stars and dust clouds. The same method was later applied in solid mechanics to overcome limitations of mesh-based methods; their advantage is that \textit{the approximation of unknowns in the PDE is constructed based on scattered points without mesh connectivity}~\cite{Chen:meshless_overview_after_20_years}.
 
-Basic principle of MM is the construction of an approximating field $u^{h}$ for the sought solution $u $ of the PDE, expressed by the following expansion:
+Basic principle of MM is the construction of an approximating field $u^{h}$ for the sought solution $u\colon\Omega\to\R$ of the governing equation, i.e. PDE, expressed by the following expansion:
 \begin{equation}
 	\label{eqn:general_u_discretization}
 	u^{h}(\vec{x}) = \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}
 \end{equation}
-where $\vec{x} \in \R^{d}$ is one of the N generated nodes $\Set{\vec{x}_1 \dots \vec{x}_N}$ distributed over the physical domain $\Omega \subset \R^{d}$, $B_k(\vec{x})$ are the basis functions and $\alpha_k$ are the expansions coefficients.
+where $\vec{x} \in \R^{d}$ is one of the N generated nodes $\Set{\vec{x}_1 \dots \vec{x}_N}$ distributed over the physical domain $\Omega \subset \R^{d}$, $B_k\colon\Omega\to\R$ are the basis functions and $\alpha_k$ are the expansions coefficients.
 
-Different choices for the basis functions $B_k$ leads to different formulations and in literature can be found several of these, some examples are:  reproducing kernel particle method (RKPM)~\cite{Liu:RKPM}, moving least square (MLS)~\cite{Lancaster:MLS}, radial basis function (RBF)~\cite{Kansa:RBF_1},~\cite{Kansa:RBF_2} and partition of unity (PU)~\cite{Schweitzer:PU}.
+Different choices for the basis functions $B_k$ leads to different formulations and in literature can be found several of these, some examples are:  reproducing kernel particle method (RKPM)~\cite{Liu:RKPM}, moving least square (MLS)~\cite{Lancaster:MLS}, radial basis function (RBF)~\cite{Kansa:RBF_1, Kansa:RBF_2} and partition of unity (PU)~\cite{Schweitzer:PU}.
 
 Now that we defined the general form of our approximated solution for the PDE, we can employ it for the discretization of the PDE.
-First consider a general PDE on $\Omega$ with a boundary $\partial\Omega=\Gamma$:
+First consider a general PDE on $\Omega$ with a boundary $\partial\Omega$:
 \begin{equation}
 	\label{sys:generic_continous_PDE}
 	\begin{cases}
 		\mathcal{L} u(\vec{x})  = f(\vec{x})		& \text{in $\Omega$} \\
-		u(\vec{x}) 							   = g(\vec{x})	 & \text{on $\Gamma$}
+		u(\vec{x}) 							   = g(\vec{x})	 & \text{on $\partial\Omega$}
 	\end{cases}
 \end{equation}
-where $\mathcal{L}$ is a linear differential operator, $f$ and $g$ are known function. If  we now replace our approximation ~\eqref{eqn:general_u_discretization} in~\eqref{sys:generic_continous_PDE} we will obtain, in general, a non-zero error function $\epsilon^{h}$ given by:
+where $\mathcal{L}$ is a linear differential operator, $f\colon\Omega\to\R$ is the source term  and $g\colon\partial\Omega\to\R$ are the boundary conditions (BCs); both $f$ and $g$ are known functions. If  we now replace our approximation ~\eqref{eqn:general_u_discretization} in~\eqref{sys:generic_continous_PDE} we will obtain, in general, a non-zero error function $\epsilon^{h}$ given by:
 \begin{equation}
 	\epsilon^{h}(\vec{x}) = \mathcal{L} u^{h}(\vec{x}) - f(\vec{x})
 \end{equation}
-A set of test function $\Upsilon$ orthogonal to $\epsilon^{h}$ are then used to integrate the error to zero:
+A set of test function $\Gamma$ orthogonal to $\epsilon^{h}$ are then used to integrate the error to zero:
 \begin{equation}
 	\begin{split}
-		\int_{\Omega} \Upsilon \epsilon^{h}\,d\Omega & = \int_{\Omega} \Upsilon (\mathcal{L} u^{h}(\vec{x}) - f(\vec{x}))\,d\Omega  \\
-		& = \int_{\Omega} \Upsilon \Bigl[ \mathcal{L}\Bigl( \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}\Bigr) - f(\vec{x})\Bigr]\,d\Omega = 0
+		\int_{\Omega} \Gamma \epsilon^{h}\,d\Omega & = \int_{\Omega} \Gamma (\mathcal{L} u^{h}(\vec{x}) - f(\vec{x}))\,d\Omega  \\
+		& = \int_{\Omega} \Gamma \Bigl[ \mathcal{L}\Bigl( \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}\Bigr) - f(\vec{x})\Bigr]\,d\Omega = 0
 	\end{split}
 \end{equation}
-and different choices of $\Upsilon$ leads to different formulations~\cite{Chen:meshless_overview_after_20_years}:
+and different choices of $\Gamma$ leads to different formulations~\cite{Chen:meshless_overview_after_20_years}:
 \begin{description}
 	\item[Galerking Meshless Methods] that use weak form of PDE. These require domain integration and require special techniques to enforce boundary conditions;
 	\item[Collocation Meshless Methods] that use strong form of PDE and allows to solve them directly on the generated nodes. Further they do not require domain integration nor special procedures to deal with boundary conditions
 \end{description}
+
+
+\section{Motivation of case study}
+
+% Add citation to the Poisson eq. see RBF_in_depth for details
+In this section we motivate the specific case that will be studied in the following chapters: the generic heat equation with internal heat generation at steady state given by
+\begin{equation}
+	\label{eq:Poisson_equation}
+	\begin{cases}
+		- \Delta u(\vec{x}) = f(\vec{x})														 &  \text{in $\Omega$}							\\
+		u(\vec{x}) = g(\vec{x})  																		&  \text{on $\partial\Omega$}
+	\end{cases}
+\end{equation}
+The reason behind this choice are due to both its wide range of applications in different areas	(e.g. electrostatic, chemistry, gravitation and others) and the simplicity of its analytical manipulation. Equation~\eqref{eq:Poisson_equation} is one of the many PDEs that can be solved using the meshless approaches explained in~\ref{chap:meshless_methods}.
+
+In particular for this thesis we will:
+\begin{itemize}
+	\item consider domains $\Omega \subset \R^{d}$ with $d=1,3$;
+	\item use RBFs augmented with polynomial terms as basis functions $B_k$ to approximate the solution $u$ in a similar way to what has been done in~\cite{Liu:Intro_to_meshfree_methods}; 
+	\item formulate the problem in its strong form, thus we will use the collocation technique in combination with the Weighted Residual Method.
+\end{itemize}
+thus we will apply the RBF-generated Finite Differences (RBF-FD)~\cite{Fornberg:RBF-FD_1, Fornberg:RBF-FD_2} to solve~\eqref{eq:Poisson_equation} in one and three dimensional physics domain.
+
+Mono dimensional physics domain are used to gain confidence with the techniques explained while three dimensional  domain are used for their application in real case problems as those faced at Esteco. $2$D cases, instead, have been skipped in the analysis since they would only be used to bridge the 2 previous scenarios and therefore would have had no practical utility.
+
+% Add motivation for RBF-FD
+
+Finally, collocation technique is employed because thanks to its ability to discretize the Boundary Value problem~\eqref{eq:Poisson_equation} expressed in strong form it leads to a real fully meshless approach~\cite{Miotti:RBF_in_depth}.
+
 
 \section{Ipsum}
 
