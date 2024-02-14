@@ -54,6 +54,11 @@
 % Math stuff
 \usepackage{amsmath}
 \numberwithin{equation}{section}
+\usepackage{amsfonts}
+\newcommand{\numberset}{\mathbb}  % Easier typing of  numerical sets
+\newcommand{\R}{\numberset{R}}
+\renewcommand{\vec}{\boldsymbol}  % Shorthand to bold vectors
+\usepackage{braket}  % Per gli insiemi
 
 % Clickable links and references
 \usepackage{hyperref}
@@ -154,6 +159,7 @@
 %*******************************************************
 % Bibliography
 %*******************************************************
+\nocite{*}
 \printbibliography
 
 %*******************************************************
