@@ -58,10 +58,13 @@
 \newcommand{\numberset}{\mathbb}  % Easier typing of  numerical sets
 \newcommand{\R}{\numberset{R}}
 \renewcommand{\vec}{\boldsymbol}  % Shorthand to bold vectors
-\usepackage{braket}  % Per gli insiemi
+\usepackage{braket}  % For mathematical sets
+\usepackage{mathtools}  % Easier command for mathematical norm
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 
 % Clickable links and references
 \usepackage{hyperref}
+\usepackage[english]{varioref}
 
 % For code sections
 \usepackage{minted}
@@ -133,7 +136,6 @@
 \input{main/Chapter1}
 \input{main/Chapter2}
 \input{main/Chapter3}
-\input{main/Chapter4}
 
 %*******************************************************
 % Conclusion
@@ -151,8 +153,6 @@
 \label{appendix}
 
 \input{back/Appendix1}
-\input{back/Appendix2}
-\input{back/Appendix3}
 
 \backmatter
 

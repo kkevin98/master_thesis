@@ -1,7 +1,6 @@
-\chapter{Meshless methods}\label{chap:lorem}
-\label{chap:meshless_methods}
+\chapter{Meshless methods}\label{chap:meshless_methods}
 
-Meshless or Meshfree methods (MM) were developed to overcome the drawbacks of traditional mesh-based methods.
+Meshless or Meshfree methods (MMs) were developed to overcome the drawbacks of traditional mesh-based methods.
 They appeared for the first time in $1977$ with the Smooth Particle Hydrodynamics method~\cite{Belytschko:meshless_overview}, initially used to modeling astrophysical phenomena such as exploding stars and dust clouds. The same method was later applied in solid mechanics to overcome limitations of mesh-based methods; their advantage is that \textit{the approximation of unknowns in the PDE is constructed based on scattered points without mesh connectivity}~\cite{Chen:meshless_overview_after_20_years}.
 
 Basic principle of MM is the construction of an approximating field $u^{h}$ for the sought solution $u\colon\Omega\to\R$ of the governing equation, i.e. PDE, expressed by the following expansion:
@@ -9,7 +8,7 @@ Basic principle of MM is the construction of an approximating field $u^{h}$ for 
 	\label{eqn:general_u_discretization}
 	u^{h}(\vec{x}) = \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}
 \end{equation}
-where $\vec{x} \in \R^{d}$ is one of the N generated nodes $\Set{\vec{x}_1 \dots \vec{x}_N}$ distributed over the physical domain $\Omega \subset \R^{d}$, $B_k\colon\Omega\to\R$ are the basis functions and $\alpha_k$ are the expansions coefficients.
+where $\vec{x} \in \R^{d}$ is one of the N generated nodes $\Set{\vec{x}_1, \dots, \vec{x}_N}$ distributed over the physical domain $\Omega \subset \R^{d}$, $B_k\colon\Omega\to\R$ are the basis functions and $\alpha_k$ are the expansions coefficients.
 
 Different choices for the basis functions $B_k$ leads to different formulations and in literature can be found several of these, some examples are:  reproducing kernel particle method (RKPM)~\cite{Liu:RKPM}, moving least square (MLS)~\cite{Lancaster:MLS}, radial basis function (RBF)~\cite{Kansa:RBF_1, Kansa:RBF_2} and partition of unity (PU)~\cite{Schweitzer:PU}.
 
@@ -22,7 +21,7 @@ First consider a general PDE on $\Omega$ with a boundary $\partial\Omega$:
 		u(\vec{x}) 							   = g(\vec{x})	 & \text{on $\partial\Omega$}
 	\end{cases}
 \end{equation}
-where $\mathcal{L}$ is a linear differential operator, $f\colon\Omega\to\R$ is the source term  and $g\colon\partial\Omega\to\R$ are the boundary conditions (BCs); both $f$ and $g$ are known functions. If  we now replace our approximation ~\eqref{eqn:general_u_discretization} in~\eqref{sys:generic_continous_PDE} we will obtain, in general, a non-zero error function $\epsilon^{h}$ given by:
+where $\mathcal{L}$ is a linear differential operator, $f\colon\Omega\to\R$ is the source term and $g\colon\partial\Omega\to\R$ are the boundary conditions (BCs); both $f$ and $g$ are known functions. If  we now replace our approximation ~\eqref{eqn:general_u_discretization} in~\eqref{sys:generic_continous_PDE} we will obtain, in general, a non-zero error function $\epsilon^{h}$ given by:
 \begin{equation}
 	\epsilon^{h}(\vec{x}) = \mathcal{L} u^{h}(\vec{x}) - f(\vec{x})
 \end{equation}
@@ -41,7 +40,7 @@ and different choices of $\Gamma$ leads to different formulations~\cite{Chen:mes
 
 
 \section{Motivation of case study}
-
+\label{sec:motivation_of_case_study}
 % Add citation to the Poisson eq. see RBF_in_depth for details
 In this section we motivate the specific case that will be studied in the following chapters: the generic heat equation with internal heat generation at steady state given by
 \begin{equation}
@@ -63,52 +62,120 @@ thus we will apply the RBF-generated Finite Differences (RBF-FD)~\cite{Fornberg:
 
 Mono dimensional physics domain are used to gain confidence with the techniques explained while three dimensional  domain are used for their application in real case problems as those faced at Esteco. $2$D cases, instead, have been skipped in the analysis since they would only be used to bridge the 2 previous scenarios and therefore would have had no practical utility.
 
-% Add motivation for RBF-FD
+RBFs, instead are used for scattered data interpolation for they has physical foundation[overview 20, Hardy 1990] and for their profitable use in applications like meteorology, turbulence analysis and neural network~\cite{Chen:meshless_overview_after_20_years}
 
 Finally, collocation technique is employed because thanks to its ability to discretize the Boundary Value problem~\eqref{eq:Poisson_equation} expressed in strong form it leads to a real fully meshless approach~\cite{Miotti:RBF_in_depth}.
 
+\section{RBF-FD method}
 
-\section{Ipsum}
+\subsection{Radial Basis Functions} \label{subsec:radial_basis_functions}
+Radial Basis Functions (RBFs), the basis functions selected to approximate the solution of~\eqref{eq:Poisson_equation} using~\eqref{eqn:general_u_discretization} are defined as:
+\begin{equation}
+	\label{eq:RBF_definition}
+	\varPhi_k(\vec{x}) = \varphi(\norm{\vec{x} - \vec{x}_k}_2)
+\end{equation}
+where $\vec{x}_k \in X$ is a given (and known) point , $\norm{\cdot}_2$ is the euclidean distance and $\phi\colon \Omega \to \R$ is a scalar field which take $\vec{x}$ as input. In particular we can clarify the name of this function:
+\begin{description}
+	\item[Radial] since thanks to the euclidean norm it satisfy radial symmetry
+	\item[Basis] since the set of radial functions $\phi_k{(\vec{x})}$ form a basis for the space of functions:
+	\[
+		F_{\varPhi} := \Set{ \sum_{k=1}^{N} \alpha_k \varPhi_k{(\vec{x})},  \quad \alpha_k \in\R }
+	\]
+\end{description}
+Finally note that for the moment the function $\varphi$ is left undefined: we will come back to it later [aggiungi reference al capitolo]
 
-Citation sample~\cite{latexcompanion}
+\subsection{RBF Interpolation}
+In general, given a set of nodes $X := \Set{\vec{x_1}, \dots,  \vec{x_n} \mid \vec{x_i} \in \Omega\subset\R^{d},\, \forall i=1, \dots, n}$, and a set of real values $f_1, \dots, f_n$, the interpolation problem results on finding a continuous function $g \colon \Omega\subset\R^{d} \to \R$ that satisfy:
+\begin{equation}
+	\label{eq:interpolation_constraints}
+	g(\vec{x_i})=f_i \qquad \forall i=1, \dots N
+\end{equation}
+$g(\vec{x}_i)=f_i$ for each $i=1, \dots N$.
+A general way to define $g$ is the following:
+\begin{equation}
+	\label{eq:interpolation_expansion}
+	g(\vec{x}) = \sum_{k=1}^{n} a_k B_k(\vec{x})
+\end{equation}
+Where $B_k$ are generic basis functions and $a_k$ are their related coefficients. In order to properly define $g$ we first need to know the values of coefficients $a_k$. These ones can be found by solving the system obtained replacing the expansion~\eqref{eq:interpolation_expansion} into the constraints~\eqref{eq:interpolation_constraints}:
+\begin{equation}
+	\underbrace{\begin{bmatrix}
+			B_1(\vec{x}_1) & \dots	   & B_n(\vec{x}_1) \\
+			\vdots					& \ddots & \vdots					\\
+			B_1(\vec{x}_n) & \dots	  & B_n(\vec{x}_n)
+	\end{bmatrix}}_{\vec{B}}
+	\begin{bmatrix}
+		a_1 \\
+		\vdots		 \\
+		a_n
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		f_1			\\
+		\vdots \\
+		f_n
+	\end{bmatrix}
+\end{equation}
+that written in compact form becomes:
+\begin{equation}
+	\vec{B} \vec{a} = \vec{f}
+\end{equation}
+where $\vec{a} = [a_1, \dots, a_n]$ and $\vec{f} = [f_1, \dots, f_n]$.
 
-\begin{figure}[!ht]\label{fig:example}
-\centering
-\includegraphics[width=.8\textwidth]{img/units_logo.png}
-\caption{A figure}
-\end{figure}
+Of course matrix $\vec{B}$ must be invertible in order to obtain $\vec{a}$, especially we want this to be true for every shape or discretization of the domain $\Omega$. But this property turns out to be dependent on the choice of the particular set of basis functions: for example if we assume $B_k(\vec{x})\in\Pi_P^d$ and $\Set{B_1, \dots, B_n}$ to be a polynomial basis of the space $\Pi_P^d$ of polynomials of degree at most $P$ in $\R^d$, then we are not able to guarantee that $\vec{B}$ is invertible for $d>1$.  This problem is explained by the Mairhuber-Curtis theorem~\cite{Mairhuber:interpolation_basis_problem}. A possible solution is to select basis function  $B_k$ that depends upon the nodal position.
+Here is where RBFs comes into play: they are ideal candidates to construct $g$ and overcome the problem of $\vec{B}$'s invertibility for non-one-dimensional problems since $\varPhi_k$, defined in equation~\eqref{eq:RBF_definition}, depends upon nodes position through euclidean distance.
 
-\lipsum[3]
+\subsection{Derivatives approximation: FD method}
 
-\begin{figure}[!ht]
-\centering
-\subfigure[Subfigure 1]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
-\subfigure[Subfigure 2]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
-\subfigure[Subfigure 3]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
-\subfigure[Subfigure 4]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
-\caption{A figure with subfigures}
-\label{fig:subexample}
-\end{figure}
+\subsection{Collocation technique}
 
-\lipsum[4]
+The core of each method employed to solve numerically  PDEs is to construct an appropriate approximation for the solution and its derivatives, and this is what MMs explained in~\ref{chap:meshless_methods} exactly do.
 
-\section{Dolor}
-\lipsum[3]
+RBF-FD, based on the strong form collocation technique, is one of these methods. 
 
-\begin{table}
-\centering
-\begin{tabular}{|c|c|}
-\hline
-\textbf{Lorem} & \textbf{Ipsum} \\
-\hline
-\hline
-Dolor & Sit \\
-\hline
-Amet &  \\
-\hline
-\end{tabular}
-\caption{A table}
-\label{tab:example}
-\end{table}
+In this section we give a brief description of method 
 
-\lipsum[4-5]
+
+%\section{Ipsum}
+%
+%Citation sample~\cite{latexcompanion}
+%
+%\begin{figure}[!ht]\label{fig:example}
+%\centering
+%\includegraphics[width=.8\textwidth]{img/units_logo.png}
+%\caption{A figure}
+%\end{figure}
+%
+%\lipsum[3]
+%
+%\begin{figure}[!ht]
+%\centering
+%\subfigure[Subfigure 1]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
+%\subfigure[Subfigure 2]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
+%\subfigure[Subfigure 3]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
+%\subfigure[Subfigure 4]{\includegraphics[width=.45\textwidth]{img/units_logo.png}}
+%\caption{A figure with subfigures}
+%\label{fig:subexample}
+%\end{figure}
+%
+%\lipsum[4]
+%
+%\section{Dolor}
+%\lipsum[3]
+%
+%\begin{table}
+%\centering
+%\begin{tabular}{|c|c|}
+%\hline
+%\textbf{Lorem} & \textbf{Ipsum} \\
+%\hline
+%\hline
+%Dolor & Sit \\
+%\hline
+%Amet &  \\
+%\hline
+%\end{tabular}
+%\caption{A table}
+%\label{tab:example}
+%\end{table}
+%
+%\lipsum[4-5]
