@@ -42,6 +42,11 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 
+% Table according to ArteLatex
+\usepackage{caption}
+\captionsetup{tableposition=top, figureposition=bottom, font=small, format=hang, labelfont={sf,bf}}
+\usepackage{booktabs}
+
 % To have appendices appear in the TOC
 \usepackage[titletoc]{appendix}
 
@@ -57,6 +62,7 @@
 \usepackage{amsfonts}
 \newcommand{\numberset}{\mathbb}  % Easier typing of  numerical sets
 \newcommand{\R}{\numberset{R}}
+\newcommand{\N}{\numberset{N}}
 \renewcommand{\vec}{\boldsymbol}  % Shorthand to bold vectors
 \usepackage{braket}  % For mathematical sets
 \usepackage{mathtools}  % Easier command for mathematical norm
@@ -136,6 +142,7 @@
 \input{main/Chapter1}
 \input{main/Chapter2}
 \input{main/Chapter3}
+\input{main/Chapter4}
 
 %*******************************************************
 % Conclusion

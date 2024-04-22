@@ -1,7 +1,220 @@
-\chapter{Automatic differentiation and adjoint method}
+\chapter{RBF-FD method}
 
-Cos'è e come funziona la differenz. automatica
+In this chapter we explain in more details the MM used within this work: the Radial Basis Function generated Finite Differences (RBF-FD) method. To do so we consider a physical domain $\Omega \cup \partial\Omega \subset \R^d$ indicating with $\Omega$ the open subset, $\partial \Omega$ its boundary and with $d \in \N$ its dimension; over the presented domain we define a boundary value problem with the same form of the one reported in~\eqref{eqn:generic_continous_PDE} and we show how RBF-FD method can be used to solve it.
 
-Cos'è e come funziona l'aggiunto e legami con la diff. automatica
+% Aggiungere qualche riga sull'importanza dellla distribuzione dei punti??
+As any other MM, before starting, a set of $N$ points distributed over the domain where to discretize the PDE is required. We indicate it with $\mathcal{X} := \Set{\vec{x}_1, \dots,  \vec{x}_N \mid \vec{x_i} \in \Omega\cup\partial\Omega, \, i=1, \dots, N}$. To remark also the fact that nodes are placed both inside the domain and on its boundary we partition $\mathcal{X}$ in $\mathcal{X_I}$, the set of internal nodes, and $\mathcal{X_B}$, the set of boundary nodes, defined as:
+\begin{gather*}
+	\mathcal{X_I} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_I} \mid \vec{x}_i \in \Omega, \, i=1, \dots, N_I} \\
+	\mathcal{X_B} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_B} \mid \vec{x}_i \in \partial\Omega, \, i=1, \dots, N_B}
+\end{gather*}
+where $N_I$ and $N_B$ indicate respectively the number of nodes inside and on the boundary. Of course $N_I + N_B = N$ and $\mathcal{X_I} \cup \mathcal{X_B} = \mathcal{X}$.
 
-Come viene applicato il metodo dell'aggiunto nel metodo RBF-FD
+This method, like other MMs, looks for an approximated solution of problem~\eqref{eqn:generic_continous_PDE} in the form of~\eqref{eqn:general_u_discretization}.
+
+%Radial Basis Function generated Finite Differences (RBF-FD) method, as any other MM, is used to solve approximately PDEs via scattered data interpolation. In particular, to do so, it makes use of the FD to define an approximation of partial derivatives for PDEs solution.
+
+\section{RBF Interpolation}
+Every MM, as we have already seen, on its core, is just a way to approximate the solution of a PDE and RBF-FD method is no exception. The tool used to do so is called scattered data interpolation and in this subsection, after explaining what it is, we see how it is related to the solution of problem~\eqref{eqn:generic_continous_PDE}.  During the explanation we start by seeing how it is used in general by MMs so to avoid becoming fixated on a single implementation and losing generality, furthermore this way of proceeding establishes all the steps that are also used in case of RBF basis functions.
+%[Metti qui il discorso dell'interpolazione locale o globale??]
+% Aggiungi un recall al problema??
+
+In general, given the set of nodes $\mathcal{X}$, and a set of known real values $u(\vec{x}_1), \dots, u(\vec{x}_N)$, the interpolation problem results on finding a continuous function $u^{h} \colon \Omega\subset\R^{d} \to \R$ that satisfy:
+\begin{equation}
+	\label{eqn:interpolation_constraints}
+	u^{h}(\vec{x_i}) = u(\vec{x}_i) \qquad  \forall \vec{x}_i \in \mathcal{X}
+\end{equation}
+
+MMs also aim to provide an approximation for an unknown function, but in addition give an hint on its form as reported in equation~\eqref{eqn:general_u_discretization}, that we report here for convenience, without further specifying the coefficients values:
+\begin{equation}
+	\label{eqn:general_u_discretization_RBF_section}
+	u^{h}({x}) = \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}
+\end{equation}
+Here is where the theory of scattered data interpolation comes in: it tells us that we are able to find the numerical values for $\alpha_1, \dots \alpha_N$ if we impose a number of conditions equal to the number of coefficients that we are looking for. These conditions must have a form like that shown in equation~\eqref{eqn:interpolation_constraints}. Therefore if we replace the generic meshless approximation within each of the $N$ interpolation conditions we can write the following system of linear equation:
+\begin{equation}
+	\label{eqn:general_system_from_scattred_data_interpolation}
+	\underbrace{
+		\begin{bmatrix}
+			B_1(\vec{x}_1)  & \dots		& B_N(\vec{x}_1)     \\
+			\vdots					& \ddots  & \vdots					      \\
+			B_1(\vec{x}_N)  & \dots		& B_N(\vec{x}_N)
+	\end{bmatrix}}_{\boldsymbol{B}}
+	\begin{bmatrix}
+		\alpha_1 \\
+		\vdots		\\
+		\alpha_N
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		u(\vec{x}_1)  \\
+		\vdots				\\
+		u(\vec{x}_N)
+	\end{bmatrix}
+\end{equation}
+that, once solved, provides us with the desired coefficients that make up $u^h$.
+We would like to stress the fact that the right hand side vector is made up of values of the unknown exact solution of problem~\eqref{eqn:generic_continous_PDE}, that we only \textit{assume } to know.
+
+During the solution of problem~\eqref{eqn:generic_continous_PDE} the following constraints are enforced instead:
+\begin{equation}
+	\begin{aligned}
+		\mathcal{L} u^h(\vec{x}_j) = f(\vec{x}_j) \quad & \text{if $\vec{x}_j \in \Omega$}  \\
+		u^h(\vec{x}_j) = g(\vec{x}_j) 						    \quad & \text{if $\vec{x}_j \in \partial\Omega$}
+	\end{aligned}
+\end{equation}
+and granting that first $N_I$ nodes belongs to $\Omega$ and the last $N_B$ to $\partial\Omega$, we can find the values of the approximated solution at the points in $\mathcal{X}$ by solving:
+\begin{equation}
+	\begin{bmatrix}
+		c_{1,1} 		& 	\dots 		& c_{1,N_I}  \\
+		\vdots			& \ddots	& \vdots		\\
+		c_{N_I,1} & \dots		& c_{N_I,N_I}
+	\end{bmatrix}
+	\begin{bmatrix}
+		u^h(\vec{x}_1)  \\
+		\vdots					\\
+		u^h(\vec{x}_{N_I})
+	\end{bmatrix}
+	=
+	\boldsymbol{f} -
+	\begin{bmatrix}
+		c_{1,N_I+1} 		& 	\dots 		& c_{1,N_B}  \\
+		\vdots			& \ddots	& \vdots		\\
+		c_{N_I,N_I+1} & \dots		& c_{N_I,N_B}
+	\end{bmatrix}
+	\boldsymbol{g}
+\end{equation}
+where $\boldsymbol{f} = [f(\vec{x}_1) \dots f(\vec{x}_{N_I})]^T$ and $\boldsymbol{g} = [g(\vec{x}_{N_I+1}) \dots g(\vec{x}_{N_B})]^T$, and the coefficient matrix $\boldsymbol{C}$ is found as the solution of:
+\begin{equation}
+	\label{eqn:generic_discretized_PDE_by_MMs}
+	\begin{bmatrix}
+		c_{1,1} 		& 	\dots 		& c_{N_I,1}  \\
+		\vdots			& \ddots	& \vdots		\\
+		c_{1,N} & \dots		& c_{N_I,N}
+	\end{bmatrix}
+	=
+	\boldsymbol{B}^{-T}
+	\begin{bmatrix}
+		\mathcal{L} B_1(\vec{x}_1)  & \dots		& \mathcal{L} B_1(\vec{x}_{N_I})     \\
+		\vdots												& \ddots  & \vdots					      								  \\
+		\mathcal{L} B_N(\vec{x}_1)  & \dots		& \mathcal{L} B_N(\vec{x}_{N_I})
+	\end{bmatrix}
+\end{equation}
+By carefully analyzing each row $\boldsymbol{c}_i = [c_{i,1}, \dots c_{i,N}]$ of matrix $\boldsymbol{C}$ we can notice that are computed solving the following linear systems:
+\begin{equation}
+	\boldsymbol{B}^T c_i = 
+	\begin{bmatrix}
+		\mathcal{L} B_1(\vec{x_i})  \\
+		\vdots											  \\
+		\mathcal{L} B_N(\vec{x_i})
+	\end{bmatrix}
+	\qquad i=1, \dots, N_I
+\end{equation}
+which are closely related to the one obtained from scattered data interpolation reported in~\eqref{eqn:general_system_from_scattred_data_interpolation} due to the presence of the same matrix $\boldsymbol{B}$. We conclude by commenting that equation~\eqref{eqn:generic_discretized_PDE_by_MMs} with matrix $\boldsymbol{B}$ defined as in~\eqref{eqn:general_system_from_scattred_data_interpolation} holds true only in case of Dirichlet boundary conditions, otherwise $\boldsymbol{B}$ would take on a different form.
+
+In the case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same and leads to a matrix $\boldsymbol{B}$ defined as:
+\begin{equation}
+	\boldsymbol{B} =
+	\begin{bmatrix}
+		\Phi(\vec{x}_1, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_1, \vec{x}_N)  \\
+		\vdots											& \ddots &  \vdots											  \\
+		\Phi(\vec{x}_N, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_N, \vec{x}_N)
+	\end{bmatrix}
+\end{equation}
+
+\section{Radial Basis Functions} \label{subsec:radial_basis_functions}
+Radial Basis Functions (RBFs) are the basis functions used in~\eqref{eqn:general_u_discretization} by the RBF-FD method to approximate the solutions of PDEs and are defined as:
+\begin{equation}
+	\label{eq:RBF_definition}
+	\Phi_k(\vec{x}) = \varphi(\norm{\vec{x} - \vec{x}_k}_2)
+\end{equation}
+where $\vec{x}_k \in X$ is a given point , $\norm{\cdot}_2$ is the euclidean distance and $\varphi\colon \Omega\cup\partial\Omega \to \R$, named basic function, is a scalar field which takes $\vec{x}$ as input and it is used as generator for all the basis functions. In general different basic functions $\varphi$ can be used, some of them are reported in table~\ref{tab:basic_functions}.
+
+To further clarify the RBFs name we can notice that they are called:
+\begin{description}
+	\item[Radial] since the value of each $\phi_k{(\vec{x})}$ at each point $\vec{x}$ depends only on the distance between that point and $\vec{x}_k$ through $\norm{\cdot}_2$, they satisfy radial symmetry;
+	\item[Basis] since the set of radial functions $\phi_k{(\vec{x})}$ with $k=1, \dots, N$ form a basis for the space of functions:
+	\[
+	F_{\Phi} := \Set{ \sum_{k=1}^{N} \alpha_k \Phi_k{(\vec{x})},  \quad \alpha_k \in\R }
+	\]
+\end{description}
+
+\begin{table}
+	\caption{Examples of basic functions where $r_k = \norm{\vec{x} - \vec{x}_k}_2$ and $\epsilon$, called shape factor, is a suitable parameter}
+	\label{tab:basic_functions}
+	\centering
+	\begin{tabular}{cc}
+		\toprule
+		Name										&  $\varphi(r_k)$																	\\
+		\midrule
+		Multiquadratic					  &  $\sqrt{1 + ( 1 + \epsilon r_k)^2}$										\\
+		Inverse multiquadratic	 &  $\big(  \sqrt{1 + ( 1 + \epsilon r_k)^2}  \big)^{-1}$  \\
+		Thin plate splines			   &  $r_k^l \log r_k, \, l  \, \text{even}$								\\
+		Gaussian							    &  $e^{- (\epsilon r_k)^2}$												  \\
+		Polyharmonics					&  $r_k^l, \, l  \, \text{odd}$														\\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{The Mairhuber-Curtis Theorem}
+
+From the previous discussion, in particular from equation~\eqref{eqn:generic_discretized_PDE_by_MMs}, it can be noticed that matrix $\boldsymbol{B}$ has to be non singular in order to be able to solve the boundary value problem, and this must hold for each node placement $\mathcal{X}$ (to be read as every possible discretization of the problem domain) as long nodes are distinct. This property of $\boldsymbol{B}$ turns out to be dependent on the choice of the particular set of basis functions: for example if we assume $B_k(\vec{x})\in\Pi_P^d$ and $\Set{B_1(\vec{x}), \dots, B_N(\vec{x})}$ to be a polynomial basis of the space $\Pi_P^d$ of polynomials of degree at most $P$ in $\R^d$, then we are not able to guarantee that $\vec{B}$ is invertible for $d>1$.
+
+This issue is explained in more detail by the Mairhuber-Curtis theorem~\cite{Mairhuber:interpolation_basis_problem}; when dealing with the multidimensional case it is possible to continuously move two nodes such that they end up by interchanging their original positions without one crossing the path of the other. If these $2$ are the only nodes of $\mathcal{X}$ that are moved, $\boldsymbol{B}$ ends up with $2$ rows exchanged leading to a change in the sign of its determinant, and, since the determinant is a continuous function, this means that there is a moment when the latter vanishes making the matrix singular.
+
+The inconvenience arises from the fact that the set of basis functions is independent from the node position and could be solved by simply choosing a basis that is function of nodes position. By doing so we no more fall in the case of the Mairhuber-Curtis theorem since whenever we move nodes also the base itself changes and if two nodes switches their positions not only their respective rows in $\boldsymbol{B}$ are switched, but also their columns, forcing the determinant not to change in sign.
+
+%TODO: Say something about the suitable node generation algorithm and then tells about polynomial augmentation and why it is required (see Riccardo thesis?). Once you've done that you can continue and start talking about RBF.
+
+\section{Polynomial augmentation}
+
+Setting aside the issue of the invertibility of matrix $\boldsymbol{B}$ in case of particular nodes arrangement discussed in previous subsection, we should also take into account  the accuracy of the interpolation that we're able to achieve, which also depends upon the type of functions that we are supposed to aprroximate.
+%[\textbf{Qui c'è una vecchia versione]}
+%In the previous subsection we have seen that we are able to obtain a unique (thanks to the non singularity of matrix $\vec{B}$ ensured by proper usage of RBFs) interpolant $g$ satisfying interpolation constraints~\eqref{eqn:interpolation_constraints}. 
+%
+%What is lacking in our discussion is the level of accuracy that we are able to reach which also depends upon the type of function that we are supposed to interpolate.
+Indeed RBFs approximation schemes alone are not able to interpolate constant, linear or higher degree polynomials fields and this is an issue since they are important in different engineering applications such modeling of constant strain in elastic bodies and steady temperature fields in differentially heated walls~\cite{Zamolo:phd_thesis}.
+
+To overcome this limitation a polynomial augmentation of degree $P$ is required, leading to the overall formulation for the RBF interpolant:
+\begin{equation}
+	\label{eq:RBF_interpolator_plus_polynomial_augmentation}
+	u^h(\vec{x}) = \sum_{j=1}^{N} \alpha_j \Phi_k(\vec{x}) + \sum_{k=1}^{M} \beta_k p_k(\vec{x})
+\end{equation}
+where $M=\binom{P+D}{D}$ is the number of polynomial basis functions with degree $P \le D$, $\Set{p_1(\vec{x}) \dots p_M({\vec{x}})}$ is a complete polynomial basis of $\Pi_P^d$ and $\beta_j$ are the corresponding coefficients to each function in the former basis. An example of polynomial basis for polynomials of degree $P=1$ in $2D$ has the following $M=3$ elements: $p_1(x,y) = 1$, $p_2(x,y) = x$, $p_3(x,y) = y$.
+
+We must also note that using an interpolant with the introduced polynomial augmentation, during the approximated solution of problem~\eqref{eqn:generic_continous_PDE} leads to an underdetermined system in~\eqref{eqn:general_system_from_scattred_data_interpolation}. In order to obtain a square $\vec{B}$ and thus having a solvable system, the following orthogonality conditions, that guarantees polynomial reproduction, have to be imposed:
+\begin{equation}
+	\label{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation}
+	\sum_{i=1}^{N} \alpha_i p_k(\vec{x}_i) = 0, \qquad i=1, \dots, M
+\end{equation}
+The coefficients of $u^h$, which are now composed not only by $\vec{\alpha} = [\alpha_1 \dots \alpha_N]$, but also by $\vec{\beta} = [\beta_1 \dots \beta_M]$, can then be found by solving the following system:
+\begin{equation}
+	\begin{bmatrix}
+		\vec{B}  & \vec{P}  \\
+		\vec{P}^T  & \vec{0}
+	\end{bmatrix}
+	\begin{bmatrix}
+		\vec{\alpha}  \\
+		\vec{\beta}
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		\vec{u}  \\
+		\vec{0}
+	\end{bmatrix}
+\end{equation}
+where:
+\begin{equation}
+	\begin{aligned}
+		\vec{P} & =
+		\begin{bmatrix}
+			p_0(\vec{x}_1)  & \dots     & p_M(\vec{x}_1)  \\
+			\vdots					 & \ddots  & \vdots						\\
+			p_0(\vec{x}_N)  & \dots     & p_M(\vec{x}_N)  \\
+		\end{bmatrix}  \\
+		\vec{u} & = [u(\vec{x}_1). \dots u(\vec{x}_N)]
+	\end{aligned} 
+\end{equation}
+From its formulation is easy to understand that the system above is simply the composition of the system in equation~\eqref{eqn:general_system_from_scattred_data_interpolation}, first row, with constraints~\eqref{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation} written in compact form, second row.
+
+In practice the addition of polynomial basis to the RBF interpolant let us perfectly fit $u(\vec{x})$ not only on collocation points where we have $u^h(\vec{x}_i)  = u(\vec{x}_i)$, but also across the rest of the domain provided that data $u(\vec{x}_1) \dots u(\vec{x}_N)$ come from a polynomial of total degree less than or equal to $P$.  Nevertheless this procedure has as a side effect since not all the basic functions $\varphi$ leads to a well-posed RBF interpolation with a non singular matrix $M$, but only the strictly conditionally positive definite of order $P+1$ ones.
+
+%TODO: Aggiungi reference alle conditionally positive definite
