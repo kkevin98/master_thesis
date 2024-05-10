@@ -1,36 +1,53 @@
 \chapter{RBF-FD method}
 
-In this chapter we explain in more details the MM used within this work: the Radial Basis Function generated Finite Differences (RBF-FD) method. To do so we consider a physical domain $\Omega \cup \partial\Omega \subset \R^d$ indicating with $\Omega$ the open subset, $\partial \Omega$ its boundary and with $d \in \N$ its dimension; over the presented domain we define a boundary value problem with the same form of the one reported in~\eqref{eqn:generic_continous_PDE} and we show how RBF-FD method can be used to solve it.
+In this chapter we explain in more details the Meshless Method (MM) used within this work: the Radial Basis Function generated Finite Differences (RBF-FD) method.
+To do so we show how it can be used to solve the general boundary value problem defined in chapter~\vref{chap:meshless_methods}.
+From now on, in order to be able to discretize the PDE, we consider to have a disposal a set of N nodes, $\mathcal{X}$, defined as follow:
+\begin{equation}
+\label{eqn:generic_set_of_nodes_X}
+	\mathcal{X} := \Set{\vec{x}_1, \dots, \vec{x} \mid \vec{x}_i \in \Omega\cup\partial\Omega, \, i=1, \dots, N}
+\end{equation}
+where $\Omega\cup\partial\Omega \subset \R^d$ is the physical domain of the problem, $\Omega$ and $\partial\Omega$ are respectively its open subset and boundary, and $d \in \N$ its dimension.
 
-% Aggiungere qualche riga sull'importanza dellla distribuzione dei punti??
-As any other MM, before starting, a set of $N$ points distributed over the domain where to discretize the PDE is required. We indicate it with $\mathcal{X} := \Set{\vec{x}_1, \dots,  \vec{x}_N \mid \vec{x_i} \in \Omega\cup\partial\Omega, \, i=1, \dots, N}$. To remark also the fact that nodes are placed both inside the domain and on its boundary we partition $\mathcal{X}$ in $\mathcal{X_I}$, the set of internal nodes, and $\mathcal{X_B}$, the set of boundary nodes, defined as:
-\begin{gather*}
-	\mathcal{X_I} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_I} \mid \vec{x}_i \in \Omega, \, i=1, \dots, N_I} \\
-	\mathcal{X_B} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_B} \mid \vec{x}_i \in \partial\Omega, \, i=1, \dots, N_B}
-\end{gather*}
-where $N_I$ and $N_B$ indicate respectively the number of nodes inside and on the boundary. Of course $N_I + N_B = N$ and $\mathcal{X_I} \cup \mathcal{X_B} = \mathcal{X}$.
+%TODO: Fai due parole sulcome vengono disposti i nodi sul dominio
 
-This method, like other MMs, looks for an approximated solution of problem~\eqref{eqn:generic_continous_PDE} in the form of~\eqref{eqn:general_u_discretization}.
+%To do so we consider a physical domain $\Omega \cup \partial\Omega \subset \R^d$ indicating with $\Omega$ the open subset, $\partial \Omega$ its boundary and with $d \in \N$ its dimension; over the presented domain we define a boundary value problem with the same form of the one reported in~\eqref{eqn:generic_continous_PDE} and we show how RBF-FD method can be used to solve it.
+%
+%% Aggiungere qualche riga sull'importanza dellla distribuzione dei punti??
+%As any other MM, before starting, a set of $N$ points distributed over the domain where to discretize the PDE is required. We indicate it with $\mathcal{X} := \Set{\vec{x}_1, \dots,  \vec{x}_N \mid \vec{x_i} \in \Omega\cup\partial\Omega, \, i=1, \dots, N}$. To remark also the fact that nodes are placed both inside the domain and on its boundary we partition $\mathcal{X}$ in $\mathcal{X_I}$, the set of internal nodes, and $\mathcal{X_B}$, the set of boundary nodes, defined as:
+%\begin{gather*}
+%	\mathcal{X_I} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_I} \mid \vec{x}_i \in \Omega, \, i=1, \dots, N_I} \\
+%	\mathcal{X_B} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_B} \mid \vec{x}_i \in \partial\Omega, \, i=1, \dots, N_B}
+%\end{gather*}
+%where $N_I$ and $N_B$ indicate respectively the number of nodes inside and on the boundary. Of course $N_I + N_B = N$ and $\mathcal{X_I} \cup \mathcal{X_B} = \mathcal{X}$.
+%
+%This method, like other MMs, looks for an approximated solution of problem~\eqref{eqn:generic_continous_PDE} in the form of~\eqref{eqn:general_u_discretization}.
 
 %Radial Basis Function generated Finite Differences (RBF-FD) method, as any other MM, is used to solve approximately PDEs via scattered data interpolation. In particular, to do so, it makes use of the FD to define an approximation of partial derivatives for PDEs solution.
 
-\section{RBF Interpolation}
-Every MM, as we have already seen, on its core, is just a way to approximate the solution of a PDE and RBF-FD method is no exception. The tool used to do so is called scattered data interpolation and in this subsection, after explaining what it is, we see how it is related to the solution of problem~\eqref{eqn:generic_continous_PDE}.  During the explanation we start by seeing how it is used in general by MMs so to avoid becoming fixated on a single implementation and losing generality, furthermore this way of proceeding establishes all the steps that are also used in case of RBF basis functions.
-%[Metti qui il discorso dell'interpolazione locale o globale??]
-% Aggiungi un recall al problema??
+\section{Scattered Data Interpolation}
+Every MM, as we have already seen, on its core, is just a way to approximate the solution of a PDE and RBF-FD method is no exception; the tool used to do so is called \emph{scattered data interpolation}. In this section we first see what scattered data interpolation is and then how it is related to PDEs solution. In the second part of the explanation we see how it is applied in general by MMs so to avoid to becoming fixated on a single implementation and losing generality; moreover this approach is still useful since it establishes all the steps that are also followed by RBF-FD.
+To avoid from the very beginning any kind of ambiguity we underline that scattered data interpolation, is inherently connected to data fitting and not to PDEs approximation, consequently, it finds many other applications beyond the realm of MMs. An example can be found in~\cite{Amidror:scattered_data_interpolation_in_image_processing}.
 
-In general, given the set of nodes $\mathcal{X}$, and a set of known real values $u(\vec{x}_1), \dots, u(\vec{x}_N)$, the interpolation problem results on finding a continuous function $u^{h} \colon \Omega\subset\R^{d} \to \R$ that satisfy:
+In general the interpolation problem has the following, simple, formulation. Given:
+\begin{itemize}
+	\item a finite set of nodes,  $\mathcal{X} \subset \R^d$, which could be the one reported in~\eqref{eqn:generic_set_of_nodes_X} and;
+	\item a set of known real values $u(\vec{x}_1), \dots, u(\vec{x}_N)$, which may be obtained from a function
+\end{itemize}
+we want to find a continuous function $u^{h} \colon \Omega\cup\partial\Omega\subset\R^{d} \to \R$ that satisfy:
 \begin{equation}
 	\label{eqn:interpolation_constraints}
 	u^{h}(\vec{x_i}) = u(\vec{x}_i) \qquad  \forall \vec{x}_i \in \mathcal{X}
 \end{equation}
+If the locations, the nodes in $\mathcal{X}$ where the measurements $u(\vec{x}_1), \dots, u(\vec{x}_N)$ are taken, are placed on a uniform or regular grid we talk about interpolation, otherwise the process above is called \emph{scattered} data interpolation. Here the main idea is to find a function $u^h$ which is a ``good''  fit to the given data, where with ``good'' we mean a function that exactly match the given measurements at the corresponding locations.
 
-MMs also aim to provide an approximation for an unknown function, but in addition give an hint on its form as reported in equation~\eqref{eqn:general_u_discretization}, that we report here for convenience, without further specifying the coefficients values:
+MMs also aim to provide an approximation for an unknown function defined as a linear combination of a set of basis functions as reported in equation~\eqref{eqn:general_u_discretization}; we report here for clarity its definition:
 \begin{equation}
 	\label{eqn:general_u_discretization_RBF_section}
 	u^{h}({x}) = \sum_{k= 1}^{N} {\alpha_k B_k(\vec{x})}
 \end{equation}
-Here is where the theory of scattered data interpolation comes in: it tells us that we are able to find the numerical values for $\alpha_1, \dots \alpha_N$ if we impose a number of conditions equal to the number of coefficients that we are looking for. These conditions must have a form like that shown in equation~\eqref{eqn:interpolation_constraints}. Therefore if we replace the generic meshless approximation within each of the $N$ interpolation conditions we can write the following system of linear equation:
+and we remark that coefficients $\alpha_k$ are unknown.
+Here is where the theory of scattered data interpolation is applied: it tells us that we are able to find the numerical values for $\alpha_1, \dots \alpha_N$ if we impose a number of conditions equal to the number of coefficients that we are looking for. These conditions must have a form like that shown in equation~\eqref{eqn:interpolation_constraints}. Therefore if we replace the generic meshless approximation within each of the $N$ interpolation conditions we can write the following linear system:
 \begin{equation}
 	\label{eqn:general_system_from_scattred_data_interpolation}
 	\underbrace{
@@ -51,8 +68,8 @@ Here is where the theory of scattered data interpolation comes in: it tells us t
 		u(\vec{x}_N)
 	\end{bmatrix}
 \end{equation}
-that, once solved, provides us with the desired coefficients that make up $u^h$.
-We would like to stress the fact that the right hand side vector is made up of values of the unknown exact solution of problem~\eqref{eqn:generic_continous_PDE}, that we only \textit{assume } to know.
+that, once solved, provides us the desired coefficients that uniquely define $ u^h $ given the set of basis functions $ \Set{B_1, \dots, B_N} $.
+We would like to stress the fact that, however, the right hand side vector is made up of values of the unknown exact solution of problem~\eqref{eqn:generic_continous_PDE}.
 
 During the solution of problem~\eqref{eqn:generic_continous_PDE} the following constraints are enforced instead:
 \begin{equation}
@@ -61,7 +78,7 @@ During the solution of problem~\eqref{eqn:generic_continous_PDE} the following c
 		u^h(\vec{x}_j) = g(\vec{x}_j) 						    \quad & \text{if $\vec{x}_j \in \partial\Omega$}
 	\end{aligned}
 \end{equation}
-and granting that first $N_I$ nodes belongs to $\Omega$ and the last $N_B$ to $\partial\Omega$, we can find the values of the approximated solution at the points in $\mathcal{X}$ by solving:
+and if we arrange the nodes such that the first $N_I$ nodes belongs to $\Omega$ and the last $N_B$ to $\partial\Omega$, we can find the values of the approximated solution at the points in $\mathcal{X}$ by solving:
 \begin{equation}
 	\begin{bmatrix}
 		c_{1,1} 		& 	\dots 		& c_{1,N_I}  \\
@@ -98,7 +115,7 @@ where $\boldsymbol{f} = [f(\vec{x}_1) \dots f(\vec{x}_{N_I})]^T$ and $\boldsymbo
 		\mathcal{L} B_N(\vec{x}_1)  & \dots		& \mathcal{L} B_N(\vec{x}_{N_I})
 	\end{bmatrix}
 \end{equation}
-By carefully analyzing each row $\boldsymbol{c}_i = [c_{i,1}, \dots c_{i,N}]$ of matrix $\boldsymbol{C}$ we can notice that are computed solving the following linear systems:
+Analyzing each row $\boldsymbol{c}_i = [c_{i,1}, \dots c_{i,N}]$ of matrix $\boldsymbol{C}$ we can notice that are computed solving the following linear systems:
 \begin{equation}
 	\boldsymbol{B}^T c_i = 
 	\begin{bmatrix}
@@ -108,17 +125,7 @@ By carefully analyzing each row $\boldsymbol{c}_i = [c_{i,1}, \dots c_{i,N}]$ of
 	\end{bmatrix}
 	\qquad i=1, \dots, N_I
 \end{equation}
-which are closely related to the one obtained from scattered data interpolation reported in~\eqref{eqn:general_system_from_scattred_data_interpolation} due to the presence of the same matrix $\boldsymbol{B}$. We conclude by commenting that equation~\eqref{eqn:generic_discretized_PDE_by_MMs} with matrix $\boldsymbol{B}$ defined as in~\eqref{eqn:general_system_from_scattred_data_interpolation} holds true only in case of Dirichlet boundary conditions, otherwise $\boldsymbol{B}$ would take on a different form.
-
-In the case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same and leads to a matrix $\boldsymbol{B}$ defined as:
-\begin{equation}
-	\boldsymbol{B} =
-	\begin{bmatrix}
-		\Phi(\vec{x}_1, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_1, \vec{x}_N)  \\
-		\vdots											& \ddots &  \vdots											  \\
-		\Phi(\vec{x}_N, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_N, \vec{x}_N)
-	\end{bmatrix}
-\end{equation}
+which are closely related to the ones obtained from scattered data interpolation reported in~\eqref{eqn:general_system_from_scattred_data_interpolation} due to the presence of the same matrix $\boldsymbol{B}$. We conclude by commenting that equation~\eqref{eqn:generic_discretized_PDE_by_MMs} with matrix $\boldsymbol{B}$ defined as in~\eqref{eqn:general_system_from_scattred_data_interpolation} holds true only in case of Dirichlet boundary conditions, otherwise $\boldsymbol{B}$ would take on a different form.
 
 \section{Radial Basis Functions} \label{subsec:radial_basis_functions}
 Radial Basis Functions (RBFs) are the basis functions used in~\eqref{eqn:general_u_discretization} by the RBF-FD method to approximate the solutions of PDEs and are defined as:
@@ -153,6 +160,16 @@ To further clarify the RBFs name we can notice that they are called:
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+In the case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same and leads to a matrix $\boldsymbol{B}$ defined as:
+\begin{equation}
+	\boldsymbol{B} =
+	\begin{bmatrix}
+		\Phi(\vec{x}_1, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_1, \vec{x}_N)  \\
+		\vdots											& \ddots &  \vdots											  \\
+		\Phi(\vec{x}_N, \vec{x}_1)  & 	\dots 	& 	\Phi(\vec{x}_N, \vec{x}_N)
+	\end{bmatrix}
+\end{equation}
 
 \section{The Mairhuber-Curtis Theorem}
 
