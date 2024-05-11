@@ -2,7 +2,7 @@
 
 In this chapter we explain in more details the Meshless Method (MM) used within this work: the Radial Basis Function generated Finite Differences (RBF-FD) method.
 To do so we show how it can be used to solve the general boundary value problem defined in chapter~\vref{chap:meshless_methods}.
-From now on, in order to be able to discretize the PDE, we consider to have a disposal a set of N nodes, $\mathcal{X}$, defined as follow:
+From now on, in order to be able to discretize the PDE, we consider to have a disposal a set of $N$ distinct nodes, $\mathcal{X}$, defined as follow:
 \begin{equation}
 \label{eqn:generic_set_of_nodes_X}
 	\mathcal{X} := \Set{\vec{x}_1, \dots, \vec{x} \mid \vec{x}_i \in \Omega\cup\partial\Omega, \, i=1, \dots, N}
@@ -127,41 +127,45 @@ Analyzing each row $\boldsymbol{c}_i = [c_{i,1}, \dots c_{i,N}]$ of matrix $\bol
 \end{equation}
 which are closely related to the ones obtained from scattered data interpolation reported in~\eqref{eqn:general_system_from_scattred_data_interpolation} due to the presence of the same matrix $\boldsymbol{B}$. We conclude by commenting that equation~\eqref{eqn:generic_discretized_PDE_by_MMs} with matrix $\boldsymbol{B}$ defined as in~\eqref{eqn:general_system_from_scattred_data_interpolation} holds true only in case of Dirichlet boundary conditions, otherwise $\boldsymbol{B}$ would take on a different form.
 
+
+
 \section{Radial Basis Functions} \label{subsec:radial_basis_functions}
-Radial Basis Functions (RBFs) are the basis functions used in~\eqref{eqn:general_u_discretization} by the RBF-FD method to approximate the solutions of PDEs and are defined as:
+Up to now, when talking about the approximated solution of the PDE, $u^h$, we have not specified the type of basis functions which define it. However these must be done in order to be able to find the coefficients $\alpha_k$ in equation~\eqref{eqn:general_u_discretization_RBF_section} and thus its numerical values. In this section we will define the ones used by the RBF-FD method: the Radial Basis Functions (RBFs).
+
+RBFs are defined as:
 \begin{equation}
 	\label{eq:RBF_definition}
-	\Phi_k(\vec{x}) = \varphi(\norm{\vec{x} - \vec{x}_k}_2)
+	\Phi(\vec{x}, \vec{x}_k) = \varphi(\norm{\vec{x} - \vec{x}_k}_2)
 \end{equation}
-where $\vec{x}_k \in X$ is a given point , $\norm{\cdot}_2$ is the euclidean distance and $\varphi\colon \Omega\cup\partial\Omega \to \R$, named basic function, is a scalar field which takes $\vec{x}$ as input and it is used as generator for all the basis functions. In general different basic functions $\varphi$ can be used, some of them are reported in table~\ref{tab:basic_functions}.
-
-To further clarify the RBFs name we can notice that they are called:
-\begin{description}
-	\item[Radial] since the value of each $\phi_k{(\vec{x})}$ at each point $\vec{x}$ depends only on the distance between that point and $\vec{x}_k$ through $\norm{\cdot}_2$, they satisfy radial symmetry;
-	\item[Basis] since the set of radial functions $\phi_k{(\vec{x})}$ with $k=1, \dots, N$ form a basis for the space of functions:
-	\[
-	F_{\Phi} := \Set{ \sum_{k=1}^{N} \alpha_k \Phi_k{(\vec{x})},  \quad \alpha_k \in\R }
-	\]
-\end{description}
+where $\vec{x}_k \in \R^d$ is a given and known point , $\norm{\cdot}_2$ is the euclidean distance and $\varphi\colon \R \to \R$, named \emph{basic} function, is a (univariate) function which takes the radius $r_k = \norm{\vec{x} - \vec{x}_k}_2$ as input and it is used as generator for all the (multivariate) \emph{basis} functions associated to different $\vec{x}_k$. In general different basic functions $\varphi$ can be used, some of them are reported in table~\ref{tab:basic_functions}. Sometimes the notations $\Phi(\vec{x} - \vec{x}_k)$ or $\Phi_k({\vec{x}})$ are also used instead of $\Phi(\cdot, \vec{x}_k)$.
 
 \begin{table}
-	\caption{Examples of basic functions where $r_k = \norm{\vec{x} - \vec{x}_k}_2$ and $\epsilon$, called shape factor, is a suitable parameter}
+	\caption{Examples of basic functions where $r$ is a real number greater than or equal to zero, and $\epsilon$, called shape factor, is a suitable parameter}
 	\label{tab:basic_functions}
 	\centering
 	\begin{tabular}{cc}
 		\toprule
-		Name										&  $\varphi(r_k)$																	\\
+		Name										&  $\varphi(r)$																	\\
 		\midrule
-		Multiquadratic					  &  $\sqrt{1 + ( 1 + \epsilon r_k)^2}$										\\
-		Inverse multiquadratic	 &  $\big(  \sqrt{1 + ( 1 + \epsilon r_k)^2}  \big)^{-1}$  \\
-		Thin plate splines			   &  $r_k^l \log r_k, \, l  \, \text{even}$								\\
-		Gaussian							    &  $e^{- (\epsilon r_k)^2}$												  \\
-		Polyharmonics					&  $r_k^l, \, l  \, \text{odd}$														\\
+		Multiquadratic					 			&  $\sqrt{1+(\epsilon r)^2}$													\\
+		Inverse multiquadratic	 					&  $\big(  \sqrt{1 + (\epsilon r)^2}  \big)^{-1}$  								\\
+		Thin plate splines			   				&  $r^{2l} \log l, \, l\in\N$													\\
+		Gaussian							    	&  $e^{- (\epsilon r)^2}$												  		\\
+		Polyharmonics								&  $r^{2l + 1}, \, l\in\N$														\\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-In the case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same and leads to a matrix $\boldsymbol{B}$ defined as:
+To further clarify the RBFs name we can notice that they are called:
+\begin{description}
+	\item[Radial] since the value of each $\Phi(\cdot, \vec{x}_k)$ at each point $\vec{x}$ depends only on the distance between that point and $\vec{x}_k$ through $\norm{\cdot}_2$, they satisfy radial symmetry, i.e. $\Phi(\vec{x}_i, \vec{x}_j) = \Phi(\vec{x}_j, \vec{x}_i)$ for any $\vec{x}_i, \vec{x}_j \in \R^d$;
+	\item[Basis] since in case of a set of $N$ distinct nodes in $\R^d$, as can be $\mathcal{X}$ given in~\eqref{eqn:generic_set_of_nodes_X}, the set of radial functions $\Phi_k{(\vec{x})}$ with $k=1, \dots, N$ associated to each point of the set, form a basis for the space of functions:
+	\[
+	F_{\Phi} := \Set{ \sum_{k=1}^{N} \alpha_k \Phi_k{(\vec{x})},  \quad \alpha_k \in\R, \, \vec{x}_k \in \mathcal{X}}
+	\]
+\end{description}
+
+In case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same as explained in the previous section and leads to a matrix $\boldsymbol{B}$ defined as:
 \begin{equation}
 	\boldsymbol{B} =
 	\begin{bmatrix}
