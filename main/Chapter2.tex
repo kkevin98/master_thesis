@@ -129,8 +129,20 @@ which are closely related to the ones obtained from scattered data interpolation
 
 
 
+\section{The Mairhuber-Curtis theorem}
+
+From the previous discussion, in particular from equation~\eqref{eqn:generic_discretized_PDE_by_MMs}, it can be noticed that matrix $\boldsymbol{B}$ has to be non singular in order to be able to solve the linear system associated to the boundary value problem, and this must hold for each node placement $\mathcal{X}$ (to be read as every possible discretization of the problem domain) as long nodes are distinct. This property of $\boldsymbol{B}$ turns out to be dependent on the choice of the particular set of basis functions: for example if we assume $B_k(\vec{x})\in\Pi_P^d$ and $\Set{B_1(\vec{x}), \dots, B_N(\vec{x})}$ to be a polynomial basis of the space $\Pi_P^d$ of polynomials of degree at most $P$ in $\R^d$, then we are not able to guarantee that $\vec{B}$ is invertible for $d>1$.
+
+This issue is explained in more detail by the Mairhuber-Curtis theorem~\cite{Mairhuber:interpolation_basis_problem}; when dealing with the multidimensional case it is possible to continuously move two nodes along a closed path $P$, that does not interfere with any other node in $\mathcal{X}$, such that they end up by interchanging their original positions without one crossing the path of the other. In the event that these two are the only nodes of $\mathcal{X}$ that are moved, $\boldsymbol{B}$ ends up with two rows exchanged leading to a change in the sign of its determinant, and, since the determinant is a continuous function, this means that there is a moment when the latter vanishes making the matrix singular.
+
+The inconvenience arises from the fact that the set of basis functions is independent from the node position and could be solved by simply choosing a basis that is function of nodes position. By doing so we no more fall in the case of the Mairhuber-Curtis theorem since whenever we move nodes also the base itself changes and if two nodes switches their positions not only their respective rows in $\boldsymbol{B}$ are switched, but also their columns, forcing the determinant not to change in sign.
+
+%TODO: Say something about the suitable node generation algorithm and then tells about polynomial augmentation and why it is required (see Riccardo thesis?). Once you've done that you can continue and start talking about RBF.
+
+
+
 \section{Radial Basis Functions} \label{subsec:radial_basis_functions}
-Up to now, when talking about the approximated solution of the PDE, $u^h$, we have not specified the type of basis functions which define it. However these must be done in order to be able to find the coefficients $\alpha_k$ in equation~\eqref{eqn:general_u_discretization_RBF_section} and thus its numerical values. In this section we will define the ones used by the RBF-FD method: the Radial Basis Functions (RBFs).
+Up to now, when talking about the approximated solution of the PDE, $u^h$, we have not specified the type of basis functions which define it. However these must be done in order to be able to find the coefficients $\alpha_k$ in equation~\eqref{eqn:general_u_discretization_RBF_section} and thus its numerical values; furthermore it would be appropriate to select a set of functions that allow the avoidance of the aforementioned Mairhuber-Curtis' theorem case. In this section we will define the ones used by the RBF-FD method: the Radial Basis Functions (RBFs).
 
 RBFs are defined as:
 \begin{equation}
@@ -165,7 +177,7 @@ To further clarify the RBFs name we can notice that they are called:
 	\]
 \end{description}
 
-In case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same as explained in the previous section and leads to a matrix $\boldsymbol{B}$ defined as:
+In case of RBF-FD method the implementation of scattered data interpolation and the solution of governing equation remain the same as explained in the previous section and leads to a symmetric matrix $\boldsymbol{B}$ defined as:
 \begin{equation}
 	\boldsymbol{B} =
 	\begin{bmatrix}
@@ -175,33 +187,25 @@ In case of RBF-FD method the implementation of scattered data interpolation and 
 	\end{bmatrix}
 \end{equation}
 
+We conclude by observing that this functions are particularly convenient since they depend on nodes position through $\vec{x}_k$, thus they allow to avoid the non-invertibility of matrix $\vec{B}$ in case of singular node arrangements (Mairhuber-Curtis theorem).
 
 
-\section{The Mairhuber-Curtis theorem}
-
-From the previous discussion, in particular from equation~\eqref{eqn:generic_discretized_PDE_by_MMs}, it can be noticed that matrix $\boldsymbol{B}$ has to be non singular in order to be able to solve the linear system associated to the boundary value problem, and this must hold for each node placement $\mathcal{X}$ (to be read as every possible discretization of the problem domain) as long nodes are distinct. This property of $\boldsymbol{B}$ turns out to be dependent on the choice of the particular set of basis functions: for example if we assume $B_k(\vec{x})\in\Pi_P^d$ and $\Set{B_1(\vec{x}), \dots, B_N(\vec{x})}$ to be a polynomial basis of the space $\Pi_P^d$ of polynomials of degree at most $P$ in $\R^d$, then we are not able to guarantee that $\vec{B}$ is invertible for $d>1$.
-
-This issue is explained in more detail by the Mairhuber-Curtis theorem~\cite{Mairhuber:interpolation_basis_problem}; when dealing with the multidimensional case it is possible to continuously move two nodes along a closed path $P$, that does not interfere with any other node in $\mathcal{X}$, such that they end up by interchanging their original positions without one crossing the path of the other. In the event that these two are the only nodes of $\mathcal{X}$ that are moved, $\boldsymbol{B}$ ends up with two rows exchanged leading to a change in the sign of its determinant, and, since the determinant is a continuous function, this means that there is a moment when the latter vanishes making the matrix singular.
-
-The inconvenience arises from the fact that the set of basis functions is independent from the node position and could be solved by simply choosing a basis that is function of nodes position. By doing so we no more fall in the case of the Mairhuber-Curtis theorem since whenever we move nodes also the base itself changes and if two nodes switches their positions not only their respective rows in $\boldsymbol{B}$ are switched, but also their columns, forcing the determinant not to change in sign.
-
-%TODO: Say something about the suitable node generation algorithm and then tells about polynomial augmentation and why it is required (see Riccardo thesis?). Once you've done that you can continue and start talking about RBF.
 
 \section{Polynomial augmentation}
 
-Setting aside the issue of the invertibility of matrix $\boldsymbol{B}$ in case of particular nodes arrangement discussed in previous subsection, we should also take into account  the accuracy of the interpolation that we're able to achieve, which also depends upon the type of functions that we are supposed to aprroximate.
+Setting aside the issue of the invertibility of matrix $\boldsymbol{B}$ in case of particular nodes arrangement discussed in previous subsection, we should also take into account  the accuracy of the interpolation that we are able to achieve, which also depends upon the type of functions that we are supposed to approximate.
 %[\textbf{Qui c'è una vecchia versione]}
 %In the previous subsection we have seen that we are able to obtain a unique (thanks to the non singularity of matrix $\vec{B}$ ensured by proper usage of RBFs) interpolant $g$ satisfying interpolation constraints~\eqref{eqn:interpolation_constraints}. 
 %
 %What is lacking in our discussion is the level of accuracy that we are able to reach which also depends upon the type of function that we are supposed to interpolate.
-Indeed RBFs approximation schemes alone are not able to interpolate constant, linear or higher degree polynomials fields and this is an issue since they are important in different engineering applications such modeling of constant strain in elastic bodies and steady temperature fields in differentially heated walls~\cite{Zamolo:phd_thesis}.
+Indeed RBFs approximation schemes alone are not able to exactly interpolate (i.e. with an accuracy only depending on roud-off errors) constant, linear or higher degree polynomials fields. This is an issue in different important engineering applications such as modeling of constant strain in elastic bodies and steady temperature fields in differentially heated walls~\cite{Zamolo:phd_thesis}.
 
-To overcome this limitation a polynomial augmentation of degree $P$ is required, leading to the overall formulation for the RBF interpolant:
+To overcome this limitation, a polynomial augmentation of degree $P$ is required, leading to the overall formulation for the RBF interpolant:
 \begin{equation}
 	\label{eq:RBF_interpolator_plus_polynomial_augmentation}
 	u^h(\vec{x}) = \sum_{j=1}^{N} \alpha_j \Phi_k(\vec{x}) + \sum_{k=1}^{M} \beta_k p_k(\vec{x})
 \end{equation}
-where $M=\binom{P+D}{D}$ is the number of polynomial basis functions with degree $P \le D$, $\Set{p_1(\vec{x}) \dots p_M({\vec{x}})}$ is a complete polynomial basis of $\Pi_P^d$ and $\beta_j$ are the corresponding coefficients to each function in the former basis. An example of polynomial basis for polynomials of degree $P=1$ in $2D$ has the following $M=3$ elements: $p_1(x,y) = 1$, $p_2(x,y) = x$, $p_3(x,y) = y$.
+where $M=\binom{P+D}{D}$ is the number of polynomial basis functions with degree $P \le D$, $\Set{p_1(\vec{x}) \dots p_M({\vec{x}})}$ is a complete polynomial basis of $\Pi_P^d$ and $\beta_j$ are the corresponding coefficients. An example of polynomial basis for polynomials of degree $P=1$ in $2D$ has the following $M=3$ elements: $p_1(x,y) = 1$, $p_2(x,y) = x$, $p_3(x,y) = y$.
 
 We must also note that using an interpolant with the introduced polynomial augmentation, during the approximated solution of problem~\eqref{eqn:generic_continous_PDE} leads to an underdetermined system in~\eqref{eqn:general_system_from_scattred_data_interpolation}. In order to obtain a square $\vec{B}$ and thus having a solvable system, the following orthogonality conditions, that guarantees polynomial reproduction, have to be imposed:
 \begin{equation}
