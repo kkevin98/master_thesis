@@ -130,6 +130,7 @@ which are closely related to the ones obtained from scattered data interpolation
 
 
 \section{The Mairhuber-Curtis theorem}
+\label{sec:Mairhubert-Curtis}
 
 From the previous discussion, in particular from equation~\eqref{eqn:generic_discretized_PDE_by_MMs}, it can be noticed that matrix $\boldsymbol{B}$ has to be non singular in order to be able to solve the linear system associated to the boundary value problem, and this must hold for each node placement $\mathcal{X}$ (to be read as every possible discretization of the problem domain) as long nodes are distinct. This property of $\boldsymbol{B}$ turns out to be dependent on the choice of the particular set of basis functions: for example if we assume $B_k(\vec{x})\in\Pi_P^d$ and $\Set{B_1(\vec{x}), \dots, B_N(\vec{x})}$ to be a polynomial basis of the space $\Pi_P^d$ of polynomials of degree at most $P$ in $\R^d$, then we are not able to guarantee that $\vec{B}$ is invertible for $d>1$.
 
@@ -194,10 +195,6 @@ We conclude by observing that this functions are particularly convenient since t
 \section{Polynomial augmentation}
 
 Setting aside the issue of the invertibility of matrix $\boldsymbol{B}$ in case of particular nodes arrangement discussed in previous subsection, we should also take into account  the accuracy of the interpolation that we are able to achieve, which also depends upon the type of functions that we are supposed to approximate.
-%[\textbf{Qui c'è una vecchia versione]}
-%In the previous subsection we have seen that we are able to obtain a unique (thanks to the non singularity of matrix $\vec{B}$ ensured by proper usage of RBFs) interpolant $g$ satisfying interpolation constraints~\eqref{eqn:interpolation_constraints}. 
-%
-%What is lacking in our discussion is the level of accuracy that we are able to reach which also depends upon the type of function that we are supposed to interpolate.
 Indeed RBFs approximation schemes alone are not able to exactly interpolate (i.e. with an accuracy only depending on roud-off errors) constant, linear or higher degree polynomials fields. This is an issue in different important engineering applications such as modeling of constant strain in elastic bodies and steady temperature fields in differentially heated walls~\cite{Zamolo:phd_thesis}.
 
 To overcome this limitation, a polynomial augmentation of degree $P$ is required, leading to the overall formulation for the RBF interpolant:
@@ -207,26 +204,29 @@ To overcome this limitation, a polynomial augmentation of degree $P$ is required
 \end{equation}
 where $M=\binom{P+D}{D}$ is the number of polynomial basis functions with degree $P \le D$, $\Set{p_1(\vec{x}) \dots p_M({\vec{x}})}$ is a complete polynomial basis of $\Pi_P^d$ and $\beta_j$ are the corresponding coefficients. An example of polynomial basis for polynomials of degree $P=1$ in $2D$ has the following $M=3$ elements: $p_1(x,y) = 1$, $p_2(x,y) = x$, $p_3(x,y) = y$.
 
-We must also note that using an interpolant with the introduced polynomial augmentation, during the approximated solution of problem~\eqref{eqn:generic_continous_PDE} leads to an underdetermined system in~\eqref{eqn:general_system_from_scattred_data_interpolation}. In order to obtain a square $\vec{B}$ and thus having a solvable system, the following orthogonality conditions, that guarantees polynomial reproduction, have to be imposed:
+We must also note that using an interpolant with the introduced polynomial augmentation leads to an underdetermined system in~\eqref{eqn:general_system_from_scattred_data_interpolation}. In order to obtain a square $\vec{B}$ and thus having a solvable system, the following orthogonality conditions have to be imposed:
 \begin{equation}
 	\label{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation}
 	\sum_{i=1}^{N} \alpha_i p_k(\vec{x}_i) = 0, \qquad i=1, \dots, M
 \end{equation}
 The coefficients of $u^h$, which are now composed not only by $\vec{\alpha} = [\alpha_1 \dots \alpha_N]$, but also by $\vec{\beta} = [\beta_1 \dots \beta_M]$, can then be found by solving the following system:
 \begin{equation}
-	\begin{bmatrix}
-		\vec{B}  & \vec{P}  \\
-		\vec{P}^T  & \vec{0}
-	\end{bmatrix}
-	\begin{bmatrix}
-		\vec{\alpha}  \\
-		\vec{\beta}
-	\end{bmatrix}
-	=
-	\begin{bmatrix}
-		\vec{u}  \\
-		\vec{0}
-	\end{bmatrix}
+\label{eqn:general_system_from_scattred_data_interpolation_poly_augmentation}
+\underbrace{
+\begin{bmatrix}
+	\vec{B}  & \vec{P}  \\
+	\vec{P}^T  & \vec{0}
+\end{bmatrix}
+}_{\vec{M}}
+\begin{bmatrix}
+	\vec{\alpha}  \\
+	\vec{\beta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+	\vec{u}  \\
+	\vec{0}
+\end{bmatrix}
 \end{equation}
 where:
 \begin{equation}
@@ -240,8 +240,90 @@ where:
 		\vec{u} & = [u(\vec{x}_1). \dots u(\vec{x}_N)]
 	\end{aligned} 
 \end{equation}
-From its formulation is easy to understand that the system above is simply the composition of the system in equation~\eqref{eqn:general_system_from_scattred_data_interpolation}, first row, with constraints~\eqref{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation} written in compact form, second row.
+From its formulation is easy to understand that the system above is simply the composition of the system in equation~\eqref{eqn:general_system_from_scattred_data_interpolation}, in the first row, with constraints~\eqref{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation} written in compact form, in the second row.
 
-In practice the addition of polynomial basis to the RBF interpolant let us perfectly fit $u(\vec{x})$ not only on collocation points where we have $u^h(\vec{x}_i)  = u(\vec{x}_i)$, but also across the rest of the domain provided that data $u(\vec{x}_1) \dots u(\vec{x}_N)$ come from a polynomial of total degree less than or equal to $P$.  Nevertheless this procedure has as a side effect since not all the basic functions $\varphi$ leads to a well-posed RBF interpolation with a non singular matrix $M$, but only the strictly conditionally positive definite of order $P+1$ ones.
+In practice the addition of polynomial basis to the RBF interpolant let us perfectly fit $u(\vec{x})$ not only on collocation points where we have $u^h(\vec{x}_i)  = u(\vec{x}_i)$, but also across the rest of the domain provided that data $u(\vec{x}_1) \dots u(\vec{x}_N)$ come from a polynomial of total degree less than or equal to $P$.  Nevertheless this procedure has as a side effect since not all set of nodes $\mathcal{X}$ nor all basic functions $\varphi$ leads to a well-posed RBF interpolation with a non singular matrix $M$. We will discuss this limitation in more detail in the next section.
 
-%TODO: Aggiungi reference alle conditionally positive definite
+
+
+\section{Problem solution}
+
+At the beginning of section~\ref{sec:Mairhubert-Curtis} we mentioned that the system in equation~\eqref{eqn:generic_discretized_PDE_by_MMs} might not be solvable in case of a combination of non-point-dependent basis functions and particular nodes arrangements, but, up to now, we did not discuss in general in which cases the interpolation problem is solvable. In this section we will address this shortcoming.
+
+We start by recalling that, in case of pure RBF interpolant, the system that we aim to solve has the following compact form:
+\begin{equation}
+	\label{eqn:general_system_from_scattred_data_interpolation_compact_form}
+	\vec{B} \vec{\alpha} = \vec{u}
+\end{equation}
+where $\vec{B}$ is a symmetric matrix.
+This means that the above system require a positive definite $\vec{B}$ in order to be solved and this property depends on the choice of the basic function $\varphi$ used to define the RBFs. By definition only \emph{strictly} positive definite~\cite{Fasshauer:details_on_basic_functions} $\varphi$ are associated to a positive definite $\vec{B}$ and, this, restrict our choices: of those shown in table~\vref{tab:basic_functions} only the Inverse Multiquadratic satisfy this requirement. The same attributes of $\varphi$ are also inherited by the associated RBFs $\Phi_k$
+
+However in previous section we have seen that, beyond the solvability issue, a polynomial augmentation of degree $P$ is beneficial for the accuracy of the interpolant $u^h$. This means that the system that we have to solve, in general, is no more in the form shown in equation~\eqref{eqn:general_system_from_scattred_data_interpolation_compact_form}, but rather in the following:
+\begin{equation}
+\label{eqn:general_system_from_scattred_data_interpolation_poly_augmentation_compact_form}
+\vec{M}
+\begin{bmatrix}
+	\vec{\alpha}  \\  \vec{\beta}
+\end{bmatrix} = 
+\begin{bmatrix}
+	\vec{u}  \\  \vec{0}
+\end{bmatrix}
+\end{equation}
+In this case the matrix that has to be positive definite would be $\vec{M}$, which is symmetric as well, that we recall being defined as:
+\begin{equation}
+\label{eqn:global_M_definition}
+\vec{M} =
+\begin{bmatrix}
+	\vec{B}    &  \vec{P}  \\
+	\vec{P}^T  &  \vec{0}
+\end{bmatrix}
+\end{equation}
+To be such the following conditions have to be met~\cite{Miotti:phd_thesis}:
+\begin{enumerate}
+	\item basic function $\varphi$ has to be \emph{strictly conditionally} positive definite function of order $P$~\cite{Fasshauer:details_on_basic_functions};  \label{enum:condition_on_basic_functions_for_solvability}
+	\item matrix $\vec{P}$ has to be full-rank.  \label{enum:condition_on_P_for_solvability}
+\end{enumerate}
+Condition~\ref{enum:condition_on_basic_functions_for_solvability} allows a greater freedom on the choice of the basic function, compared to the pure RBF interpolant: in fact, the set of strictly conditionally positive definite functions of order $P$ is a superset of strictly positive definite functions. These functions are defined as those that require a polynomial augmentation of order at least $P-1$ in order to give a non singular $\vec{M}$. Strictly conditionally positive definite functions of order $P$ are also strictly conditionally positive definite of any higher order. This means that, in case $u^h$ include a polynomial augmentation of order $1$, we can also use Multiquadratic, Thin plate splines with $l=0$ and Polyharmonics with $l=1$ (refer again to table~\ref{tab:basic_functions} for their definitions) as basic funtions as these are strictly conditionally definite of order 1. At this point someone might consider increasing the degree $P$ of the polynomial augmentation up to the theoretical limit for the size of matrix $\vec{P}$, i.e. $M=N$, in order to increase the accuracy of the interpolant, but doing so results in ill-conditioning and singularity issues related to $\vec{P}$ that, since non-singularity of $\vec{P}$ is a necessary condition for the non singularity of $\vec{M}$, also affect $\vec{M}$.
+
+This is why condition~\ref{enum:condition_on_P_for_solvability} is also required. It can be shown that to have a full-rank $\vec{P}$ the set $\mathcal{X}$, containing the nodes respect to which we are carrying out the interpolation, must be $P$-unisolvent~\cite{Fasshauer:details_on_basic_functions}, where $P$ is the degree of the polynomial augmentation. This dependency of $\vec{P}$'s rank on the node locations should not surprise since the matrix columns consist on the elements of the polynomial basis evaluated at the different points in $\mathcal{X}$, and they are required to be linearly independent.
+
+Given the node generation technique used in this work a safe rule for a stable implementation (in the sense of a well-posed interpolation probelm) of the polynomial augmentation is to respect the inequality $2M \le N$ where $M$ is the number of terms in the polynomial basis and $N$ is the number of nodes in $\mathcal{X}$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
