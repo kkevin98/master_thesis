@@ -26,6 +26,8 @@ where $\Omega\cup\partial\Omega \subset \R^d$ is the physical domain of the prob
 %Radial Basis Function generated Finite Differences (RBF-FD) method, as any other MM, is used to solve approximately PDEs via scattered data interpolation. In particular, to do so, it makes use of the FD to define an approximation of partial derivatives for PDEs solution.
 
 \section{Scattered Data Interpolation}
+\label{sec:scattered_data_interpolation}
+
 Every MM, as we have already seen, on its core, is just a way to approximate the solution of a PDE and RBF-FD method is no exception; the tool used to do so is called \emph{scattered data interpolation}. In this section we first see what scattered data interpolation is and then how it is related to PDEs solution. In the second part of the explanation we see how it is applied in general by MMs so to avoid to becoming fixated on a single implementation and losing generality; moreover this approach is still useful since it establishes all the steps that are also followed by RBF-FD.
 To avoid from the very beginning any kind of ambiguity we underline that scattered data interpolation, is inherently connected to data fitting and not to PDEs approximation, consequently, it finds many other applications beyond the realm of MMs. An example can be found in~\cite{Amidror:scattered_data_interpolation_in_image_processing}.
 
@@ -291,15 +293,37 @@ Given the node generation technique used in this work a safe rule for a stable i
 
 
 
+\section{RBF-FD}
+
+In this section we are going to discuss in detail how RBF-FD meshless method is used to solve Partial Differential Equations (PDEs). As already briefly mentioned in section~\vref{sec:scattered_data_interpolation} interpolation of scattered data is the key to do so: in particular it is used to obtain a finite-difference-like discretization of the differential operator~\cite{Miotti:RBF_in_depth,Zamolo:RBF-FD_with_Neumann}
 
 
+\subsection{Finite difference method}
 
+%TODO: Cita come avviene l'approssimazione (secondo highlights del libro sulle FD) [Prima di quesa frase, ma non nnecessariamente in questa subsection]
+Before tackling the approximation of PDEs solution, we first consider the more basic task of approximating the derivatives of a known function by Finite Difference (FD) formulas based only on values of the function itself at discrete points. Given $u$, in the simplest case a function of one variable assumed to be sufficiently smooth, we want to approximate its derivatives at a given point $\overline{x}$ relying solely on its values at a finite number of points close to $\overline{x}$. In general its $k$-th derivative is approximated by the following FD formula:
+\begin{equation}
+	\frac{d^k u}{dx^k}\bigg|_{x=\overline{x}} = u^{(k)}(\overline{x}) \approx \sum_{i=1}^{n} c_{i}^{k} u(x_i)
+\end{equation}
+where $\Set{u(x_1), \dots, u(x_n)}$ are the function's samples and $\Set{c_{1}^{k}, \dots, c_{n}^{k}}$, which can be computed in different ways such as the method of undetermined coefficients or via polynomial interpolation~\cite{LeVeque:FD_book}, are called FD weights.
 
+To give a concrete example we could approximate $u'(\overline{x})$ with the following one-sided approximations:
+\begin{subequations}
+	\begin{align}
+		D_+ u(\overline{x}) & = \frac{u(\overline{x}+h) - u(\overline{x})}{h}  \label{eqn:forward_FD_approx}\\
+		D_- u(\overline{x}) & = \frac{u(\overline{x}) - u(\overline{x}-h)}{h}  \label{eqn:backward_FD_approx}
+	\end{align}
+\end{subequations}
+for some value of $ h$. This is motivated by the standard definition of the derivative as the limiting value of this expression as $h \to 0$. In these cases the same FD weights, $\Set{1/h, - 1/h}$, are associated to function values coming from different discrete points: $\Set{u(\overline{x}+h), u(\overline{x})}$ for equation~\eqref{eqn:forward_FD_approx} and $\Set{u(\overline{x}), u(\overline{x}-h)}$ for~\eqref{eqn:backward_FD_approx}. Another possibility is to use the centered approximation:
+\begin{equation}
+	D_0 u(\overline{x}) = \frac{u(\overline{x}+h) - u(\overline{x}-h)}{h} = \frac{1}{2} \bigl( D_+ u(\overline{x}) + D_- u(\overline{x}) \bigr)
+\end{equation}
 
-
-
-
-
+To derive approximations to higher order derivatives, besides the two method mentioned above, is also possible to repeatedly apply first order differences. Just as the second order derivatives is the derivative of $u'$, we can view $D^2u(\overline{x})$, the second order derivative approximant, as being a finite difference of first differences: $D^2 u(\overline{x}) = D_+ D_- u(\overline{x})$ or $D^2 u(\overline{x}) = D_- D_+ u(\overline{x})$. If we use a step size $h/2$ in each centered approximation to the first derivative we could also define $D^2 u(\overline{x})$ as a centeered difference of centered differences and obtain:
+\begin{equation}
+	D^2 u(\overline{x}) = \frac{1}{h} \Biggl( \biggl( \frac{u(\overline{x}+h) - u(\overline{x})}{h} \biggr) - \biggl( \frac{u(\overline{x}) - u(\overline{x}-h)}{h} \biggr) \Biggr)
+\end{equation}
+where FD weights $\Set{1/h^2, -2/h^2, 1/h^2}$ are associated to $\Set{u(\overline{x}+h), u(\overline{x}), u(\overline{x}-h)}$
 
 
 
