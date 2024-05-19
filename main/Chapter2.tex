@@ -1,5 +1,7 @@
 \chapter{RBF-FD method}
 
+%TODO: Valuta se mettere i 2 punti davanti gli uguale quando definisci qualcosa facendolo cadere dall'alto
+
 In this chapter we explain in more details the Meshless Method (MM) used within this work: the Radial Basis Function generated Finite Differences (RBF-FD) method.
 To do so we show how it can be used to solve the general boundary value problem defined in chapter~\vref{chap:meshless_methods}.
 From now on, in order to be able to discretize the PDE, we consider to have a disposal a set of $N$ distinct nodes, $\mathcal{X}$, defined as follow:
@@ -201,8 +203,8 @@ Indeed RBFs approximation schemes alone are not able to exactly interpolate (i.e
 
 To overcome this limitation, a polynomial augmentation of degree $P$ is required, leading to the overall formulation for the RBF interpolant:
 \begin{equation}
-	\label{eq:RBF_interpolator_plus_polynomial_augmentation}
-	u^h(\vec{x}) = \sum_{j=1}^{N} \alpha_j \Phi_k(\vec{x}) + \sum_{k=1}^{M} \beta_k p_k(\vec{x})
+	\label{eqn:RBF_interpolator_plus_polynomial_augmentation}
+	u^h(\vec{x}) = \sum_{j=1}^{N} \alpha_j \Phi_j(\vec{x}) + \sum_{k=1}^{M} \beta_k p_k(\vec{x})
 \end{equation}
 where $M=\binom{P+D}{D}$ is the number of polynomial basis functions with degree $P \le D$, $\Set{p_1(\vec{x}) \dots p_M({\vec{x}})}$ is a complete polynomial basis of $\Pi_P^d$ and $\beta_j$ are the corresponding coefficients. An example of polynomial basis for polynomials of degree $P=1$ in $2D$ has the following $M=3$ elements: $p_1(x,y) = 1$, $p_2(x,y) = x$, $p_3(x,y) = y$.
 
@@ -295,8 +297,14 @@ Given the node generation technique used in this work a safe rule for a stable i
 
 \section{RBF-FD}
 
-In this section we are going to discuss in detail how RBF-FD meshless method is used to solve Partial Differential Equations (PDEs). As already briefly mentioned in section~\vref{sec:scattered_data_interpolation} interpolation of scattered data is the key to do so: in particular it is used to obtain a finite-difference-like discretization of the differential operator~\cite{Miotti:RBF_in_depth,Zamolo:RBF-FD_with_Neumann}
+In this section we are going to discuss in detail how RBF-FD meshless method is used to solve Partial Differential Equations (PDEs). Its first implementation was developed by Kansa in~\cite{Kansa:RBF_1,Kansa:RBF_2}. His approach, that we denote as \emph{global method}, due to its computational inefficiencies (that we are going to reference at the appropriate time), was eventually dropped in preference for the one suggested by Tolstykh in~\cite{Tolstykh:RBF_local}. We will denote the latter as \emph{local method}. In recent years RBF-FD local method has been developed and applied with success~\cite{Bueno:RBF-FD_application_1,Bueno:RBF-FD_application_2,Kosec:RBF-FD_application_3,Kosec:RBF-FD_application_4}.
 
+The goal of both methods is to approximate solutions to PDEs, i.e., to find a function (or some discrete
+approximation to this function) which satisfies a given relationship between various of its derivatives on some given region of space along with some boundary conditions along the edges of this domain. In most cases an analytic formula for the solution can not be found.
+What RBF-FD methods do is replacing derivatives in the differential equation by Finite Difference approximations in such a way as to obtain a large algebraic system of equations to be solved in place of the differential equation; this could be easily solved with a computer.
+
+
+%TODO: Is done via scattered data interpolation as stated in its related section.
 
 \subsection{Finite difference method}
 
@@ -314,6 +322,7 @@ To give a concrete example we could approximate $u'(\overline{x})$ with the foll
 		D_- u(\overline{x}) & = \frac{u(\overline{x}) - u(\overline{x}-h)}{h}  \label{eqn:backward_FD_approx}
 	\end{align}
 \end{subequations}
+%TODO: Forse è meglio usare eq 1.5 e 1.6 invece di 1.5a e 1.5b??
 for some value of $ h$. This is motivated by the standard definition of the derivative as the limiting value of this expression as $h \to 0$. In these cases the same FD weights, $\Set{1/h, - 1/h}$, are associated to function values coming from different discrete points: $\Set{u(\overline{x}+h), u(\overline{x})}$ for equation~\eqref{eqn:forward_FD_approx} and $\Set{u(\overline{x}), u(\overline{x}-h)}$ for~\eqref{eqn:backward_FD_approx}. Another possibility is to use the centered approximation:
 \begin{equation}
 	D_0 u(\overline{x}) = \frac{u(\overline{x}+h) - u(\overline{x}-h)}{h} = \frac{1}{2} \bigl( D_+ u(\overline{x}) + D_- u(\overline{x}) \bigr)
@@ -324,6 +333,234 @@ To derive approximations to higher order derivatives, besides the two method men
 	D^2 u(\overline{x}) = \frac{1}{h} \Biggl( \biggl( \frac{u(\overline{x}+h) - u(\overline{x})}{h} \biggr) - \biggl( \frac{u(\overline{x}) - u(\overline{x}-h)}{h} \biggr) \Biggr)
 \end{equation}
 where FD weights $\Set{1/h^2, -2/h^2, 1/h^2}$ are associated to $\Set{u(\overline{x}+h), u(\overline{x}), u(\overline{x}-h)}$
+
+
+
+\subsection{Formulation}
+
+Now that we have gained a certain level of familiarity with Finite Difference  (FD) methods we can see how they are generalized to PDEs differential operators by RBF-FD in order to obtain easily solvable linear systems.
+
+We start by recalling that the boundary value problem that we have to solve is defined as:
+\begin{equation}
+	\label{eqn:boundary_value_problem}
+	\begin{cases}
+		\mathcal{L} u  = f 		 & \text{in $\Omega$} \\
+		\mathcal{B} u   = g	     & \text{on $\partial\Omega$}
+	\end{cases}
+\end{equation}
+where $\mathcal{L}$ and $\mathcal{B}$ are linear operators and its solution $u$ could be approximated by a function $u^h$ defined as reported in equation~\eqref{eqn:RBF_interpolator_plus_polynomial_augmentation}:
+\begin{equation}
+	\label{eqn:Kansa_interpolan}
+	u^h(\vec{x}) = \sum_{j=1}^{N} \alpha_j \Phi_j(\vec{x}) + \sum_{k=1}^{M} \beta_k p_k(\vec{x})
+\end{equation}
+which holds true all over the domain. Coefficients of the expansions are found by solving equation~\eqref{eqn:general_system_from_scattred_data_interpolation_poly_augmentation}:
+\begin{equation}
+\underbrace{
+	\begin{bmatrix}
+		\vec{B}  & \vec{P}  \\
+		\vec{P}^T  & \vec{0}
+	\end{bmatrix}
+}_{\vec{M}}
+\begin{bmatrix}
+	\vec{\alpha}  \\
+	\vec{\beta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+	\vec{u}  \\
+	\vec{0}
+\end{bmatrix}
+\end{equation}
+In order to streamline the explanation of the procedure we split the set of nodes $\mathcal{X}$ reported in~\eqref{eqn:generic_set_of_nodes_X} into the two following sets:
+\begin{subequations}
+	\begin{gather}
+		\mathcal{X}_I := \Set{\vec{x}_1, \dots, \vec{x}_{N_I} \mid \vec{x}_i \in \Omega, \, i=1, \dots, N_I}  \\
+		\mathcal{X}_B := \Set{\vec{x}_{N_I+1}, \dots, \vec{x}_{N_B} \mid \vec{x}_i \in \partial\Omega, \, i=N_I+1, \dots, N_B}
+	\end{gather}
+\end{subequations}
+where $N_I$ and $N_B$ indicate respectively the number of nodes inside and on the boundary of the physical domain. Of course $N_I+N_B = N$ and $\mathcal{X}_I \cup \mathcal{X}_B = \mathcal{X}$.
+
+The idea that Kansa used to discretize the problem reported above is to use the theory of interpolation to approximate the differential operator $\mathcal{L}$ in the PDE, with an operator $\mathcal{L}^h$ represented by a matrix $\vec{C}_I$, using a FD-like method.
+%The data used for the interpolation are $\Set{\mathcal{L}u(\vec{x}_1), \dots, \mathcal{L}u(\vec{x}_{N_I})}$ and are easily obtainable since $f$ is known and $\mathcal{L} u  = f$ in $\Omega$. 
+Tolstykh's approach follows the same concept as Kansa's, but adds \emph{stencil} as novelty. A stencil of $m$ nodes is associated to each node $\vec{x}_i \in \mathcal{X}_I$ and it is defined as the set $\mathcal{X}_i = \Set{\vec{x}_1, \dots, \vec{x}_m} \subseteq \mathcal{X}$ formed by the neighbors of $\vec{x}_i$; in addition $\mathcal{X}_i$ can be interpreted as the union of $\mathcal{X}_{i,I} = \Set{\vec{x}_1, \dots, \vec{x}_{m_I}}$ and $\mathcal{X}_{i,B} = \Set{\vec{x}_{m_I+1}, \dots, \vec{x}_m}$, respectively the set of its $m_I$ nodes belonging to $\Omega$ and of its other $m_B$ nodes belonging to $\partial\Omega$. An example of stencil could be found in Figure~\ref{fig:2D_stencil}.
+
+\begin{figure}
+\centering
+\includegraphics[width=.5\textwidth]{img/2D_stencil}
+\caption{Example of $2$D stencil. The nodes which belong to it are marked with a red circle, its central node with a red cross. Red arrows represent the boundary normals $\vec{n}$ of those nodes belonging to $\partial\Omega$. Figure taken from~\cite{Miotti:phd_thesis}} 
+\label{fig:2D_stencil}
+\end{figure}
+
+%TODO: Add a note that tells that now on we consider only the local method underling the differences with Kansa
+In its approach the interpolation scheme is local, i.e. $u^h$ is expanded using a basis that changes depending on the position $\vec{x}$ and it is made valid only inside the stencil centered at $\vec{x}$ rather than globally across the entire domain. Thus, given a point $\vec{x}_i \in \mathcal{X}_I$ along its related stencil $\mathcal{X}_i = \Set{\vec{x}_1, \dots, \vec{x}_m}$, equation~\eqref{eqn:Kansa_interpolan} is rewritten as:
+\begin{equation}
+	\label{eqn:local_RBF-FD_interpolant}
+	u^h(\vec{x}_i) = \sum_{j=1}^{m} \alpha_j \Phi(\vec{x}_i, \vec{x}_j) + \sum_{k=1}^{M} \beta_k p_k(\vec{x}_i)
+\end{equation}
+
+Applying operator $\mathcal{L}$ to the definition of $u^h$ results in:
+\begin{equation}
+	\label{eqn:L_of_local_RBF-FD_interpolant}
+	\begin{aligned}
+		\mathcal{L} u^h(\vec{x}_i) & = \sum_{j=1}^{m} \alpha_j \mathcal{L} \Phi(\vec{x}_i, \vec{x}_j) + \sum_{k=1}^{M} \beta_k \mathcal{L} p_k(\vec{x}_i)  \\
+								   & = \begin{bmatrix}
+								   			\vec{\alpha} & \vec{\beta}
+								   	   \end{bmatrix}
+							   	   	   \begin{bmatrix}
+							   	   	   		\mathcal{L} \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  \\
+							   	   	   		\mathcal{L} \vec{p}(\vec{x}_i)
+							   	   	   \end{bmatrix}	
+	\end{aligned}
+\end{equation}
+where different vectors of coefficients $\vec{\alpha} = \bigl[\alpha_1, \dots, \alpha_m \bigr] \in \R^m$ and $\vec{\beta} = \bigl[ \beta_1, \dots, \beta_M \bigr] \in \R^M$ are associated to different $\vec{x}_i$.
+In order to find them we can note that, since equation~\eqref{eqn:local_RBF-FD_interpolant} is still an approximated solution of the boundary value problem (at least locally), it must satisfy:
+\begin{equation}
+	\begin{gathered}
+		\label{eqn:u^h_approx_u_conditions}
+		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,I}$}  \\
+		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,B}$}
+	\end{gathered}
+\end{equation}
+which rewritten in matrix form read as:
+\begin{equation}
+\underbrace{
+\begin{bmatrix}
+	\vec{\Phi}_I  			 &  \vec{P}_I  			  \\
+	\vec{\mathcal{B}\Phi}_B  &  \vec{\mathcal{B}P}_B  \\
+	\vec{P}^T				 &  \vec{0}				  \\
+\end{bmatrix}}_{\vec{M_{BC}}}
+\begin{bmatrix}
+	\vec{\alpha}  \\
+	\vec{\beta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+	\vec{u}_I  \\
+	\vec{g}	   \\
+	\vec{0}
+\end{bmatrix}
+\end{equation}
+where $\vec{u}_I = \Set{u(\vec{x}_1), \dots, u(\vec{x}_{m_I})} \in R^{m_I}$ and $\vec{g} = \Set{g(\vec{x}_{m_I+1}), \dots, g(\vec{x}_m)} \in \R^{m_B}$ and the new terms in $\vec{M_{BC}} \in \R^{(m+M) \times (m+M)}$ are defined as follow:
+\begin{equation}
+	\begin{gathered}
+		\vec{\Phi}_I = \begin{bmatrix}
+							\Phi(\vec{x}_1, \vec{x}_1)    	  &    \dots    & \Phi(\vec{x}_1, \vec{x}_m)  		\\
+							\vdots						  	  &  \ddots		& \vdots					  		\\
+							\Phi(\vec{x}_{m_i}, \vec{x}_1)    &    \dots    & \Phi(\vec{x}_{m_I}, \vec{x}_m)
+					   \end{bmatrix} \in \R^{m_I \times m}  \\
+		\vec{P}_I = \begin{bmatrix}
+							p_1(\vec{x}_{1})	&  \dots  &  p_M(\vec{x}_{m_I})   \\
+							\vdots				& \ddots  & \vdots					\\	
+							p_1(\vec{x}_{1})	&  \dots  &  p_M(\vec{x}_{m_I})
+					\end{bmatrix} \in \R^{m_I \times M}  \\
+		\vec{\mathcal{B}\Phi}_B = \begin{bmatrix}
+										\mathcal{B}\Phi(\vec{x}_{m_I+1}, \vec{x_1})  &  \dots  & \mathcal{B}\Phi(\vec{x}_{m_I+1}, \vec{x}_m)  \\
+										\vdots										 & \ddots  & \vdots										  \\
+										\mathcal{B}\Phi(\vec{x}_{m}, \vec{x_1})  	 &  \dots  & \mathcal{B}\Phi(\vec{x}_{m}, \vec{x}_m)
+								  \end{bmatrix} \in \R^{m_B \times m}  \\
+		\vec{\mathcal{B}P}_B = \begin{bmatrix}
+									\mathcal{B}p_1(\vec{x}_{m_I+1})  &  \dots  & \mathcal{B}p_M(\vec{x}_{m_I+1})  \\
+									\vdots							 & \ddots  & \vdots							  \\
+									\mathcal{B}p_1(\vec{x}_{m})  	 &  \dots  & \mathcal{B}p_M(\vec{x}_{m})
+							  \end{bmatrix} \in \R^{m_B \times M}
+	\end{gathered}
+\end{equation}
+%TODO: Aggiungi nota sull'operatore B e sul tipo di condizioni al contorno
+Substituting the recently determined $\vec{\alpha}$ and $\vec{\beta}$ into equation~\eqref{eqn:L_of_local_RBF-FD_interpolant} we obtain:
+\begin{equation}
+	\label{eqn:FD_like_discretization_of_L_middle_step}
+	\mathcal{L} u^h(\vec{x}_i) = 
+	\begin{bmatrix}
+		\vec{u}_I  &  \vec{g}  &  \vec{0}
+	\end{bmatrix}
+	\vec{M_{BC}}^{-T}
+	\begin{bmatrix}
+		\mathcal{L} \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  \\
+		\mathcal{L} \vec{p}(\vec{x}_i)
+	\end{bmatrix}	
+\end{equation}
+We might now observe that the last two factors of equation~\eqref{eqn:FD_like_discretization_of_L_middle_step} are known, thus we can represent their product with a vector $\vec{c}(\vec{x}_i) = \bigl[ \vec{c}_I(\vec{x}_i), \vec{c}_B(\vec{x}_i), \vec{c}_p(\vec{x}_i) \bigr] \in \R^{m+M}$ that can be obtained solving the dual problem:
+\begin{equation}
+\label{eqn:row_of_C_system}
+	\vec{M_{BC}}^T
+	\begin{bmatrix}
+		\vec{c}_I(\vec{x}_i)  \\
+		\vec{c}_B(\vec{x}_i)  \\
+		\vec{c}_p(\vec{x}_i)
+   \end{bmatrix} = 
+	\begin{bmatrix}
+		\mathcal{L} \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  \\
+		\mathcal{L} \vec{p}(\vec{x}_i)
+	\end{bmatrix}
+\end{equation}
+where $\vec{c}_I(\vec{x}_i)$, $\vec{c}_B(\vec{x}_i)$ and $\vec{c}_p(\vec{x}_i)$ denote the first $m_I$, the next $m_B$ and the last $M$ elements of $\vec{c}(\vec{x}_i)$ respectively.
+Once this is done~\eqref{eqn:FD_like_discretization_of_L_middle_step} can be rewritten as:
+\begin{equation}
+	\begin{aligned}
+		\mathcal{L} u^h(\vec{x}_i) & = \vec{c}_I(\vec{x}_i)^T \vec{u}_I + \vec{c}_B(\vec{x}_i)^T \vec{g}  \\
+								   & = \sum_{j=1}^{m_I} c_j(\vec{x}_i) u(\vec{x}_j) + \sum_{k=m_I+1}^{m} c_k(\vec{x}_i)g(\vec{x}_k)
+	\end{aligned}
+\end{equation}
+which is nothing else but the FD-like approximation of $\mathcal{L}u^h$ at point $\vec{x}_i$ with FD weights given by the elements of the vectors $\vec{c}_I(\vec{x}_i)$ and $\vec{c}_P(\vec{x}_i)$. We stress that it can not be properly called FD since not only values of $u^h$ (remember that $u(\vec{x}_j) = u^h(\vec{x}_j)$ thanks to conditions~\eqref{eqn:u^h_approx_u_conditions}), but also of $g$ are used for the approximation.
+%TODO: Aggiungi che in generale l'approx di L non è esatta, ma lo è in questo caso dopo che hai definito la matrice C
+
+The values of the approximated solution at the $N_I$ nodes of $\mathcal{X}$, i.e. the solution of the PDE, can be finally found by requiring $u^h$ to approximate the exact solution at each of these points:
+\begin{equation}
+	\mathcal{L}u^h(\vec{x}_i) = \mathcal{L}u(\vec{x}_i) = f(\vec{x}_i)  \quad  \text{if $\vec{x}_i \in \mathcal{X_{i,I}}$}
+\end{equation}
+which takes the matrix form:
+\begin{equation}
+\vec{C}_I
+\begin{bmatrix}
+	u^h(\vec{x}_1)  \\
+	\vdots			\\
+	u^h(\vec{x}_{N_I})
+\end{bmatrix}
+=
+\begin{bmatrix}
+	f(\vec{x}_1)  \\
+	\vdots		  \\
+	f(\vec{x}_{N_I}))
+\end{bmatrix}
+-
+\vec{C}_B
+\begin{bmatrix}
+	g(\vec{x}_{N_I+1})  \\
+	\vdots				\\
+	g(\vec{x}_{N})
+\end{bmatrix}
+\end{equation}
+where rows of matrices $\vec{C_I}$ and $\vec{C_B}$ are formed by the elements of the vectors $\vec{c}_I(\vec{x}_i)$ and $\vec{c}_B(\vec{x}_i)$ found by solving solving equation~\eqref{eqn:row_of_C_system} $N_I$ times:
+\begin{equation}
+	\begin{gathered}
+		\vec{C}_I = \begin{bmatrix}
+						c_1{\vec{x}_1}  	&  \dots  & c_{N_I}(\vec{x}_1)  	\\
+						\vdots				& \ddots  & \vdots					\\
+						c_1{\vec{x}_{N_I}}  &  \dots  & c_{N_I}(\vec{x}_{N_I})
+					\end{bmatrix} \in \R^{N_I \times N_I}  \\
+		\vec{C}_B = \begin{bmatrix}
+						c_{N_I+1}{\vec{x}_1}  	  &  \dots  & c_{N}(\vec{x}_1)  	\\
+						\vdots					  & \ddots  & \vdots				\\
+						c_{N_I+1}{\vec{x}_{N_I}}  &  \dots  & c_{N}(\vec{x}_{N_I})
+					\end{bmatrix} \in \R^{N_I \times N_B}
+	\end{gathered}
+\end{equation}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
