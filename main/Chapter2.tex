@@ -297,7 +297,7 @@ Given the node generation technique used in this work a safe rule for a stable i
 
 \section{RBF-FD}
 
-In this section we are going to discuss in detail how RBF-FD meshless method is used to solve Partial Differential Equations (PDEs). Its first implementation was developed by Kansa in~\cite{Kansa:RBF_1,Kansa:RBF_2}. His approach, that we denote as \emph{global method}, due to its computational inefficiencies (that we are going to reference at the appropriate time), was eventually dropped in preference for the one suggested by Tolstykh in~\cite{Tolstykh:RBF_local}. We will denote the latter as \emph{local method}. In recent years RBF-FD local method has been developed and applied with success~\cite{Bueno:RBF-FD_application_1,Bueno:RBF-FD_application_2,Kosec:RBF-FD_application_3,Kosec:RBF-FD_application_4}.
+In this section we are going to discuss in detail how RBF-FD meshless method is used to solve Partial Differential Equations (PDEs). Its first implementation was developed by Kansa in~\cite{Kansa:RBF_1,Kansa:RBF_2}. His approach, that we denote as \emph{global method}, due to its computational inefficiencies (that we are going to reference later on this section), was eventually dropped in preference for the one suggested by Tolstykh in~\cite{Tolstykh:RBF_local}. We will denote the latter as \emph{local method}. In recent years RBF-FD local method has been developed and applied with success~\cite{Bueno:RBF-FD_application_1,Bueno:RBF-FD_application_2,Kosec:RBF-FD_application_3,Kosec:RBF-FD_application_4}.
 
 The goal of both methods is to approximate solutions to PDEs, i.e., to find a function (or some discrete
 approximation to this function) which satisfies a given relationship between various of its derivatives on some given region of space along with some boundary conditions along the edges of this domain. In most cases an analytic formula for the solution can not be found.
@@ -392,12 +392,13 @@ Tolstykh's approach follows the same concept as Kansa's, but adds \emph{stencil}
 \end{figure}
 
 %TODO: Add a note that tells that now on we consider only the local method underling the differences with Kansa
-In its approach the interpolation scheme is local, i.e. $u^h$ is expanded using a basis that changes depending on the position $\vec{x}$ and it is made valid only inside the stencil centered at $\vec{x}$ rather than globally across the entire domain. Thus, given a point $\vec{x}_i \in \mathcal{X}_I$ along its related stencil $\mathcal{X}_i = \Set{\vec{x}_1, \dots, \vec{x}_m}$, equation~\eqref{eqn:Kansa_interpolan} is rewritten as:
+In Tolstykh's local method the interpolation scheme is local, i.e. $u^h$ is expanded using a basis that changes depending on the position $\vec{x}$ and it is made valid only inside the stencil centered at $\vec{x}$ rather than globally across the entire domain. Thus, given a point $\vec{x}_i \in \mathcal{X}_I$ along its related stencil $\mathcal{X}_i = \Set{\vec{x}_1, \dots, \vec{x}_m}$, equation~\eqref{eqn:Kansa_interpolan} is rewritten as:
 \begin{equation}
 	\label{eqn:local_RBF-FD_interpolant}
 	u^h(\vec{x}_i) = \sum_{j=1}^{m} \alpha_j \Phi(\vec{x}_i, \vec{x}_j) + \sum_{k=1}^{M} \beta_k p_k(\vec{x}_i)
 \end{equation}
 
+\medskip
 Applying operator $\mathcal{L}$ to the definition of $u^h$ results in:
 \begin{equation}
 	\label{eqn:L_of_local_RBF-FD_interpolant}
@@ -465,6 +466,8 @@ where $\vec{u}_I = \Set{u(\vec{x}_1), \dots, u(\vec{x}_{m_I})} \in R^{m_I}$ and 
 							  \end{bmatrix} \in \R^{m_B \times M}
 	\end{gathered}
 \end{equation}
+
+\medskip
 %TODO: Aggiungi nota sull'operatore B e sul tipo di condizioni al contorno
 Substituting the recently determined $\vec{\alpha}$ and $\vec{\beta}$ into equation~\eqref{eqn:L_of_local_RBF-FD_interpolant} we obtain:
 \begin{equation}
@@ -504,12 +507,14 @@ Once this is done~\eqref{eqn:FD_like_discretization_of_L_middle_step} can be rew
 which is nothing else but the FD-like approximation of $\mathcal{L}u^h$ at point $\vec{x}_i$ with FD weights given by the elements of the vectors $\vec{c}_I(\vec{x}_i)$ and $\vec{c}_P(\vec{x}_i)$. We stress that it can not be properly called FD since not only values of $u^h$ (remember that $u(\vec{x}_j) = u^h(\vec{x}_j)$ thanks to conditions~\eqref{eqn:u^h_approx_u_conditions}), but also of $g$ are used for the approximation.
 %TODO: Aggiungi che in generale l'approx di L non è esatta, ma lo è in questo caso dopo che hai definito la matrice C
 
+\medskip
 The values of the approximated solution at the $N_I$ nodes of $\mathcal{X}$, i.e. the solution of the PDE, can be finally found by requiring $u^h$ to approximate the exact solution at each of these points:
 \begin{equation}
 	\mathcal{L}u^h(\vec{x}_i) = \mathcal{L}u(\vec{x}_i) = f(\vec{x}_i)  \quad  \text{if $\vec{x}_i \in \mathcal{X_{i,I}}$}
 \end{equation}
 which takes the matrix form:
 \begin{equation}
+\label{eqn:discretized_version_of_PDE_using_RBF-FD}
 \vec{C}_I
 \begin{bmatrix}
 	u^h(\vec{x}_1)  \\
@@ -534,23 +539,30 @@ where rows of matrices $\vec{C_I}$ and $\vec{C_B}$ are formed by the elements of
 \begin{equation}
 	\begin{gathered}
 		\vec{C}_I = \begin{bmatrix}
-						c_1{\vec{x}_1}  	&  \dots  & c_{N_I}(\vec{x}_1)  	\\
+						c_1{(\vec{x}_1)}  	&  \dots  & c_{N_I}(\vec{x}_1)  	\\
 						\vdots				& \ddots  & \vdots					\\
-						c_1{\vec{x}_{N_I}}  &  \dots  & c_{N_I}(\vec{x}_{N_I})
+						c_1{(\vec{x}_{N_I})}  &  \dots  & c_{N_I}(\vec{x}_{N_I})
 					\end{bmatrix} \in \R^{N_I \times N_I}  \\
 		\vec{C}_B = \begin{bmatrix}
-						c_{N_I+1}{\vec{x}_1}  	  &  \dots  & c_{N}(\vec{x}_1)  	\\
+						c_{N_I+1}{(\vec{x}_1)}  	  &  \dots  & c_{N}(\vec{x}_1)  	\\
 						\vdots					  & \ddots  & \vdots				\\
-						c_{N_I+1}{\vec{x}_{N_I}}  &  \dots  & c_{N}(\vec{x}_{N_I})
+						c_{N_I+1}{(\vec{x}_{N_I})}  &  \dots  & c_{N}(\vec{x}_{N_I})
 					\end{bmatrix} \in \R^{N_I \times N_B}
 	\end{gathered}
 \end{equation}
+What we just obtained in~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} is the algebraic system that once solved, in place of the PDE, using an iterative program, gives the values of the PDE approximated solution $\Set{u^h(\vec{x}_1), \dots, u^h(\vec{x}_{N_I})}$. In Kansa's global method the process is followed with the same steps as long as equation~\eqref{eqn:Kansa_interpolan} is used to approximate the PDE solution instead of the interpolant in~\eqref{eqn:local_RBF-FD_interpolant}.
 
+\bigskip
+An important remark has to be done about computational efficiencies of global and local methods since linear system~\eqref{eqn:row_of_C_system} has to be solved at any point $\vec{x}_i \in \mathcal{X}_I$, therefore requiring the inversion of $N_I$ different $\vec{M_{BC}}^T$ matrices. In case of local method each $\vec{M_{BC}}$ has size $(m+M) \times (m+M)$; instead in global method they have size $(N+M) \times (N+M)$ since conditions~\eqref{eqn:u^h_approx_u_conditions} must be enforced not only in the stencil, but over the entire domain due to the global nature of the approximated solution. Remembering that the computational cost of inverting a matrix is at least of $\bigO(n^3)$, where here $n$ denotes the number of rows and columns of the matrix to be inverted, is clear how local method is computationally advantageous respect the global one.
+Furthermore in global method derivative approximation of $u^h$ at point $\vec{x}_i$ depends on the values of $u$ across the entire domain even if derivatives are local properties of functions: this is clearly suboptimal since leads to a matrix $\vec{C}_I$, which represent the discretized differential operator $\mathcal{L}$, that is full even though it should not be in principle. On the contrary, in local method, $\vec{C}_I$ is sparse since in each row $i$ the number of non-zero entries is equal to the number of internal nodes of stencil $\mathcal{X}_I$.
+The two reason just listed are the ones that explain the benefits of stencil introduction and that led to the abandonment of Kansa's method in favor of the one proposed by Tolstykh.
 
+What we have not covered yet is the computational cost of the stencils creation: if too costly, it might negate all the benefits of the local approach. In fact this would be the case when using a brute force approach (which require a computational cost of $\bigO(N^2)$ for each $\vec{x}_i$) where all pairwise distances between nodes are computed and then sorted in order to keep just the $m$-nearest neighbors. To avoid this issue more efficient algorithms has to be used. An example of these is the $k$-d tree algorithm~\cite{Bentley:k-d_tree} which require $\bigO(N \log N)$ operations for rearranging the nodes and other $\bigO(N \log N)$ for finding a fixed number of neighbors. Regarding the effects of stencil size 
 
+\bigskip
+Finally, in addition to the stencil we note that the effect of its size are still under research: one of the last activities on this regard is the one of Kolar-Požun et al.~\cite{Kolar-Požun:effect_of_stencil_size} where they found that changing stencil's size induce oscillations in both the solution and discretization errors for the Poisson equation.
 
-
-
+%TODO: Add note about p-uisolvent stencil
 
 
 
