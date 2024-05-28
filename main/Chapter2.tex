@@ -13,19 +13,7 @@ where $\Omega\cup\partial\Omega \subset \R^d$ is the physical domain of the prob
 
 %TODO: Fai due parole sulcome vengono disposti i nodi sul dominio
 
-%To do so we consider a physical domain $\Omega \cup \partial\Omega \subset \R^d$ indicating with $\Omega$ the open subset, $\partial \Omega$ its boundary and with $d \in \N$ its dimension; over the presented domain we define a boundary value problem with the same form of the one reported in~\eqref{eqn:generic_continous_PDE} and we show how RBF-FD method can be used to solve it.
-%
-%% Aggiungere qualche riga sull'importanza dellla distribuzione dei punti??
-%As any other MM, before starting, a set of $N$ points distributed over the domain where to discretize the PDE is required. We indicate it with $\mathcal{X} := \Set{\vec{x}_1, \dots,  \vec{x}_N \mid \vec{x_i} \in \Omega\cup\partial\Omega, \, i=1, \dots, N}$. To remark also the fact that nodes are placed both inside the domain and on its boundary we partition $\mathcal{X}$ in $\mathcal{X_I}$, the set of internal nodes, and $\mathcal{X_B}$, the set of boundary nodes, defined as:
-%\begin{gather*}
-%	\mathcal{X_I} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_I} \mid \vec{x}_i \in \Omega, \, i=1, \dots, N_I} \\
-%	\mathcal{X_B} := \Set{\vec{x}_1, \dots,  \vec{x}_{N_B} \mid \vec{x}_i \in \partial\Omega, \, i=1, \dots, N_B}
-%\end{gather*}
-%where $N_I$ and $N_B$ indicate respectively the number of nodes inside and on the boundary. Of course $N_I + N_B = N$ and $\mathcal{X_I} \cup \mathcal{X_B} = \mathcal{X}$.
-%
-%This method, like other MMs, looks for an approximated solution of problem~\eqref{eqn:generic_continous_PDE} in the form of~\eqref{eqn:general_u_discretization}.
 
-%Radial Basis Function generated Finite Differences (RBF-FD) method, as any other MM, is used to solve approximately PDEs via scattered data interpolation. In particular, to do so, it makes use of the FD to define an approximation of partial derivatives for PDEs solution.
 
 \section{Scattered Data Interpolation}
 \label{sec:scattered_data_interpolation}
@@ -146,7 +134,9 @@ The inconvenience arises from the fact that the set of basis functions is indepe
 
 
 
-\section{Radial Basis Functions} \label{subsec:radial_basis_functions}
+\section{Radial Basis Functions}
+\label{subsec:radial_basis_functions}
+
 Up to now, when talking about the approximated solution of the PDE, $u^h$, we have not specified the type of basis functions which define it. However these must be done in order to be able to find the coefficients $\alpha_k$ in equation~\eqref{eqn:general_u_discretization_RBF_section} and thus its numerical values; furthermore it would be appropriate to select a set of functions that allow the avoidance of the aforementioned Mairhuber-Curtis' theorem case. In this section we will define the ones used by the RBF-FD method: the Radial Basis Functions (RBFs).
 
 RBFs are defined as:
@@ -154,7 +144,9 @@ RBFs are defined as:
 	\label{eq:RBF_definition}
 	\Phi(\vec{x}, \vec{x}_k) = \varphi(\norm{\vec{x} - \vec{x}_k}_2)
 \end{equation}
-where $\vec{x}_k \in \R^d$ is a given and known point , $\norm{\cdot}_2$ is the euclidean distance and $\varphi\colon \R \to \R$, named \emph{basic} function, is a (univariate) function which takes the radius $r_k = \norm{\vec{x} - \vec{x}_k}_2$ as input and it is used as generator for all the (multivariate) \emph{basis} functions associated to different $\vec{x}_k$. In general different basic functions $\varphi$ can be used, some of them are reported in table~\ref{tab:basic_functions}. Sometimes the notations $\Phi(\vec{x} - \vec{x}_k)$ or $\Phi_k({\vec{x}})$ are also used instead of $\Phi(\cdot, \vec{x}_k)$.
+where $\vec{x}_k \in \R^d$ is a given and known point , $\norm{\cdot}_2$ is the euclidean distance and $\varphi\colon \R \to \R$, named \emph{basic} function, is a (univariate) function which takes the radius $r_k = \norm{\vec{x} - \vec{x}_k}_2$ as input and it is used as generator for all the (multivariate) \emph{basis} functions associated to different $\vec{x}_k$.
+
+Sometimes the notations $\Phi(\vec{x} - \vec{x}_k)$ or $\Phi_k({\vec{x}})$ are also used instead of $\Phi(\cdot, \vec{x}_k)$ where ``$\cdot$'' act as a placeholder for the corresponding argument meaning that varies freely. However the $2$-arguments notation makes clear that $\Phi(\cdot, \cdot)$ is a real valued function defined on the space given by the Cartesian product $\Omega \times \Omega$. This type of functions, in accordance with the definition given in~\cite{Schaback:Kernel_definition}, are called \emph{kernels}. In general at different basic functions $\varphi$ are associated different kernels; some of these are reported in table~\ref{tab:basic_functions}.
 
 \begin{table}
 	\caption{Examples of basic functions where $r$ is a real number greater than or equal to zero, and $\epsilon$, called shape factor, is a suitable parameter}
@@ -197,6 +189,7 @@ We conclude by observing that this functions are particularly convenient since t
 
 
 \section{Polynomial augmentation}
+\label{sec:poly_augmentation}
 
 Setting aside the issue of the invertibility of matrix $\boldsymbol{B}$ in case of particular nodes arrangement discussed in previous subsection, we should also take into account  the accuracy of the interpolation that we are able to achieve, which also depends upon the type of functions that we are supposed to approximate.
 Indeed RBFs approximation schemes alone are not able to exactly interpolate (i.e. with an accuracy only depending on roud-off errors) constant, linear or higher degree polynomials fields. This is an issue in different important engineering applications such as modeling of constant strain in elastic bodies and steady temperature fields in differentially heated walls~\cite{Zamolo:phd_thesis}.
@@ -251,6 +244,7 @@ In practice the addition of polynomial basis to the RBF interpolant let us perfe
 
 
 \section{Problem solution}
+\label{sec:interpolation_prob_solution}
 
 At the beginning of section~\ref{sec:Mairhubert-Curtis} we mentioned that the system in equation~\eqref{eqn:generic_discretized_PDE_by_MMs} might not be solvable in case of a combination of non-point-dependent basis functions and particular nodes arrangements, but, up to now, we did not discuss in general in which cases the interpolation problem is solvable. In this section we will address this shortcoming.
 
@@ -337,6 +331,7 @@ where FD weights $\Set{1/h^2, -2/h^2, 1/h^2}$ are associated to $\Set{u(\overlin
 
 
 \subsection{Formulation}
+\label{subsec:RBF-FD_formulation}
 
 Now that we have gained a certain level of familiarity with Finite Difference  (FD) methods we can see how they are generalized to PDEs differential operators by RBF-FD in order to obtain easily solvable linear systems.
 
@@ -415,15 +410,17 @@ Applying operator $\mathcal{L}$ to the definition of $u^h$ results in:
 \end{equation}
 where different vectors of coefficients $\vec{\alpha} = \bigl[\alpha_1, \dots, \alpha_m \bigr] \in \R^m$ and $\vec{\beta} = \bigl[ \beta_1, \dots, \beta_M \bigr] \in \R^M$ are associated to different $\vec{x}_i$.
 In order to find them we can note that, since equation~\eqref{eqn:local_RBF-FD_interpolant} is still an approximated solution of the boundary value problem (at least locally), it must satisfy:
-\begin{equation}
-	\begin{gathered}
-		\label{eqn:u^h_approx_u_conditions}
-		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,I}$}  \\
-		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,B}$}
-	\end{gathered}
-\end{equation}
+%TODO: Valuta se cambiare l'indice da i a j come in tesi Davide pag. 132 oppure ad un altro indice tipo k
+\begin{subequations}
+\label{eqn:interpolation_conditions_on_PDE}
+	\begin{gather}
+		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,I}$}  \label{eqn:u^h_approx_u_conditions} \\
+		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{i,B}$} \label{eqn:u^h_approx_conditions_on_boundary}
+	\end{gather}
+\end{subequations}
 which rewritten in matrix form read as:
 \begin{equation}
+\label{eqn:interpolation_system_of_RBF-FD}
 \underbrace{
 \begin{bmatrix}
 	\vec{\Phi}_I  			 &  \vec{P}_I  			  \\
@@ -553,7 +550,7 @@ where rows of matrices $\vec{C_I}$ and $\vec{C_B}$ are formed by the elements of
 What we just obtained in~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} is the algebraic system that once solved, in place of the PDE, using an iterative program, gives the values of the PDE approximated solution $\Set{u^h(\vec{x}_1), \dots, u^h(\vec{x}_{N_I})}$. In Kansa's global method the process is followed with the same steps as long as equation~\eqref{eqn:Kansa_interpolan} is used to approximate the PDE solution instead of the interpolant in~\eqref{eqn:local_RBF-FD_interpolant}.
 
 \bigskip
-An important remark has to be done about computational efficiencies of global and local methods since linear system~\eqref{eqn:row_of_C_system} has to be solved at any point $\vec{x}_i \in \mathcal{X}_I$, therefore requiring the inversion of $N_I$ different $\vec{M_{BC}}^T$ matrices. In case of local method each $\vec{M_{BC}}$ has size $(m+M) \times (m+M)$; instead in global method they have size $(N+M) \times (N+M)$ since conditions~\eqref{eqn:u^h_approx_u_conditions} must be enforced not only in the stencil, but over the entire domain due to the global nature of the approximated solution. Remembering that the computational cost of inverting a matrix is at least of $\bigO(n^3)$, where here $n$ denotes the number of rows and columns of the matrix to be inverted, is clear how local method is computationally advantageous respect the global one.
+An important remark has to be done about computational efficiencies of global and local methods since linear system~\eqref{eqn:row_of_C_system} has to be solved at any point $\vec{x}_i \in \mathcal{X}_I$, therefore requiring the inversion of $N_I$ different $\vec{M_{BC}}^T$ matrices. In case of local method each $\vec{M_{BC}}$ has size $(m+M) \times (m+M)$; instead in global method they have size $(N+M) \times (N+M)$ since conditions~\eqref{eqn:interpolation_conditions_on_PDE} must be enforced not only in the stencil, but over the entire domain due to the global nature of the approximated solution. Remembering that the computational cost of inverting a matrix is at least of $\bigO(n^3)$, where here $n$ denotes the number of rows and columns of the matrix to be inverted, is clear how local method is computationally advantageous respect the global one.
 Furthermore in global method derivative approximation of $u^h$ at point $\vec{x}_i$ depends on the values of $u$ across the entire domain even if derivatives are local properties of functions: this is clearly suboptimal since leads to a matrix $\vec{C}_I$, which represent the discretized differential operator $\mathcal{L}$, that is full even though it should not be in principle. On the contrary, in local method, $\vec{C}_I$ is sparse since in each row $i$ the number of non-zero entries is equal to the number of internal nodes of stencil $\mathcal{X}_I$.
 The two reason just listed are the ones that explain the benefits of stencil introduction and that led to the abandonment of Kansa's method in favor of the one proposed by Tolstykh.
 
@@ -566,21 +563,124 @@ Finally, in addition to the stencil we note that the effect of its size are stil
 
 
 
+\section{RBF-HFD}
+
+In previous section we have overlooked a rather important fact for the implementation of the RBF-FD method: the invertibility of matrix $\vec{M_{BC}}$. When Dirichlet BC are enforced, $\mathcal{B}$ becomes the identity operator in which case $\vec{M_{BC}}$ in equation~\eqref{eqn:interpolation_system_of_RBF-FD} coincides with the matrix $\vec{M}$ of the interpolation system in~\eqref{eqn:general_system_from_scattred_data_interpolation_poly_augmentation}. In that case the problem is well-posed, regardless of the shape of domain $\Omega$ if the instructions presented in~\vref{sec:interpolation_prob_solution} are adhered to. However this is no-longer true in case of Neumann or Robin BC where is always possible, given a stencil, to find normal directions that make the local $\vec{M_{BC}}$ singular~\cite{Miotti:phd_thesis}.
+%TODO: Chiarisci spiegando che devi modificare la forma del dominio per trovare questa normale ??
+Unfortunately, simply avoiding this kind of boundary condition is not an option due to their importance in most boundary value problems of engineering interest.
+%TODO: Aggiungi reference ad altri metodi esistenti per risolvere il problema di ill-conditioning
+The solution adopted in the present work to avoid this limitation is the so called Radial Basis Functions-Hermite Finite Difference (RBF-HFD) which is unaffected by the problem related to normal directions. In this section we highlights its differences with the standard RBF-FD method and we explain how it solves the problem realted to the  why it works.
 
 
+\subsection{Hermite Interpolation}
+
+During the RBF-FD method, to find the approximated solution $u^h$ valid for a given stencil $\mathcal{X}_q = \Set{\vec{x}_1, \dots, \vec{x}_m} \subseteq \mathcal{X}$, based on a point $\vec{x}_q \in \Omega$, the following interpolation conditions are enforced:
+\begin{subequations}
+	\label{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}
+	\begin{gather}
+		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,I}$}  \label{eqn:u^h_approx_u_conditions_RBF-HFD_section} \\
+		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,B}$} \label{eqn:u^h_approx_conditions_on_boundary_RBF-HFD_section}
+	\end{gather}
+\end{subequations}
+
+In general the action of evaluating a function $u$ at a point $\vec{x}_i$ could be seen as the application of an operator $\delta_{\vec{x}_i}$, called point-evaluation functional, such that $\delta_{\vec{x}_i} u = u(\vec{x}_i)$. Furthermore functional $\delta_{\vec{x}_i}$ can be combined with other operators; an example can be found when Neumann BC are encountered in conditions~\eqref{eqn:u^h_approx_conditions_on_boundary_RBF-HFD_section}:
+\begin{equation}
+	\begin{aligned}
+		\mathcal{B} u^h(\vec{x}_i) & = \frac{\partial}{\partial \vec{n}} u^h(\vec{x}_i)											\\
+								   & = \bigg( \delta_{\vec{x}_i} \circ \frac{\partial}{\partial \vec{n}} \bigg) u^h(\cdot)
+	\end{aligned}
+\end{equation}
+where $\vec{x}_i$ belongs to $\mathcal{X}_{q,B_N} \subseteq \mathcal{X}_{q,B}$, the set of stencil's boundary nodes on which are applied Neumann BCs. To avoid excessive notation complexity in the following we assume that only Neumann BC are enforced on the points of the stencil that belongs to the boundary of the physical domain, i.e. $\mathcal{X}_{q,B_N} = \mathcal{X}_{q,B}$.
+Leveraging on these operators, interpolation condition, more generally, can be seen as a set of given values $\Set{u(\vec{x}_1), \dots, u(\vec{x}_{m})}$ along with a given set of functionals $\Lambda = \Set{\lambda_1, \dots, \lambda_{m}}$ such that:
+\begin{equation}
+	\label{eqn:Hermite_interpolation_conditions}
+	\lambda_i u^h = \lambda_i u \qquad i = 1, \dots, m
+\end{equation}
+Conditions~\eqref{eqn:Hermite_interpolation_conditions} are typically called Hermite interpolation conditions~\cite{Fasshauer:details_on_basic_functions}.
+For RBF-FD local constraints~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section} we have that $\lambda_i = \delta_{\vec{x}_i}$ for those nodes $\vec{x}_i$ that belong to $\mathcal{X}_{q,I}$ and $\lambda_i = \delta_{\vec{x}_i} \circ \frac{\partial}{\partial \vec{n}}$ for those which belong to $\mathcal{X}_{q,B}$.
+
+In case of pure RBF interpolation scheme the local approximated solution $u^h$ is given by:
+\begin{equation}
+	\label{eqn:basic_pure_RBF_interpolant}
+	u^h(\cdot) = \sum_{j=1}^{m} \alpha_j \Phi(\cdot,\vec{x}_j)
+\end{equation}
+where ``$\cdot$'' is a placeholder for the argument of the function meaning that it is not evaluated at any point. In this case the basis used for the interpolation is determined solely by the points of the stencil and is given by $\Set{\Phi(\cdot,\vec{x}_1), \dots, \Phi(\cdot,\vec{x}_m)} = \Set{\delta_{2,\vec{x}_1}\Phi(\cdot,\cdot), \dots, \delta_{2,\vec{x}_m}\Phi(\cdot,\cdot)}$ where the subscript $2$ in the point-evaluation functional indicates that it is acting on the second argument of $\Phi(\cdot, \cdot)$. Using interpolant~\eqref{eqn:basic_pure_RBF_interpolant} in case of Hermite interpolation conditions and repeating the same passages described in~\vref{sec:scattered_data_interpolation}, we would obtain a matrix $\vec{B}$:
+\begin{equation}
+	\label{eqn:unsymmetric_B}
+	\vec{B} = 
+	\begin{bmatrix}
+		\lambda_1 \Phi(\vec{x}_1, \vec{x}_1)  &  \dots  & \lambda_1 \Phi(\vec{x}_1, \vec{x}_m)  \\
+		\vdots								  & \ddots	& \vdots								 \\
+		\lambda_m \Phi(\vec{x}_m, \vec{x}_1)  &  \dots  & \lambda_m \Phi(\vec{x}_m, \vec{x}_m)
+	\end{bmatrix}
+\end{equation}
+which is not symmetrical and does not satisfy, in general, the conditions of positive definiteness or non-singularity. This is exactly the case when RBF interpolation is applied to stencil $\mathcal{X}_q$ where $\vec{B}$ becomes:
+\begin{equation}
+	\label{eqn:unsymmetric_B_RBF-FD}
+	\vec{B} = 
+	\begin{bmatrix}
+		\delta_{1,\vec{x}_1} \Phi(\cdot, \vec{x}_1)  &  \dots  & \delta_{1,\vec{x}_1} \Phi(\cdot, \vec{x}_m)  			\\
+		\vdots								  & \ddots	& \vdots								 						\\
+		\delta_{1,\vec{x}_{m_I}} \Phi(\cdot, \vec{x}_1)  &  \dots  & \delta_{1,\vec{x}_{m_I}} \Phi(\cdot, \vec{x}_m)	\\
+		\delta_{1,\vec{x}_{m_I+1}} \circ \frac{\partial}{\partial \vec{n}} \Phi(\cdot, \vec{x}_1)  &  \dots  & \delta_{1,\vec{x}_{m_I+1}} \circ \frac{\partial}{\partial \vec{n}} \Phi(\cdot, \vec{x}_m)	\\
+		\vdots								  & \ddots	& \vdots								 						\\
+		\delta_{1,\vec{x}_{m}} \circ \frac{\partial}{\partial \vec{n}} \Phi(\cdot, \vec{x}_1)  &  \dots  & \delta_{1,\vec{x}_{m}} \circ \frac{\partial}{\partial \vec{n}} \Phi(\cdot, \vec{x}_m)	\\
+	\end{bmatrix}
+\end{equation}
+which is not symmetric due to the rows associated to $\delta_{1,\vec{x}_{i}} \circ \frac{\partial}{\partial \vec{n}}$ operators obtained from Neumann BCs. We remark once more that $\vec{B}$ would have remained symmetrical in the case of Dirichlet BCs only, since their associated operator would have been just $\delta_{1,\vec{x}_{i}}$, the same applied on the first $m_i$ rows.
+
+An improvement, alternative to polynomial augmentation, is done to the basic RBF interpolant in~\eqref{eqn:basic_pure_RBF_interpolant} in order to solve this problem: a more general interpolation basis is constructed by applying different functionals other than simple point evaluation to the same kernel $\Phi(\cdot, \cdot)$; this leads to the so-called \emph{Generalized Hermite Interpolant}. Suppose that the operator $\delta_{2, \vec{x}_j}$ of the canonical RBF base is replaced with $\lambda_{2,j}$, the functional acting on the $j$-th Hermite condition, then the interpolation basis, in general, becomes: $\Set{\lambda_{2,1} \Phi(\cdot, \cdot), \dots, \lambda_{2,m} \Phi(\cdot, \cdot)}$. The new interpolant $u^h$ defined according to the Generalized Hermite Interpolation scheme then becomes:
+\begin{equation}
+	\label{eqn:pure_Hermite_interpolant}
+	u^h(\cdot) = \sum_{j=1}^{m} \alpha_j \lambda_{2,j} \Phi(\cdot,\cdot)
+\end{equation}
+which, once it is applied for interpolation, leads to an interpolation matrix:
+\begin{equation}
+	\vec{B_H} =
+	\begin{bmatrix}
+		\lambda_{1,1} \lambda_{2,1} \Phi(\cdot, \cdot)  &  \dots  & \lambda_{1,1} \lambda_{2,m} \Phi(\cdot, \cdot)  \\
+		\vdots											& \ddots  & \vdots											\\
+		\lambda_{1,m} \lambda_{2,1} \Phi(\cdot, \cdot)  &  \dots  & \lambda_{1,m} \lambda_{2,m} \Phi(\cdot, \cdot)
+	\end{bmatrix}
+\end{equation}
+which is symmetric if $\lambda_{1,j} = \lambda_{2,j}$ for $j = 1, \dots, m$. Furthermore $\vec{B_H}$ is also positive definite when the basic function $\varphi$ used to define the kernel is strictly positive definite and operators $\lambda_j$ are linearly independents~\cite{Miotti:phd_thesis}. Symmetry and positive definitiveness properties that were just referred to are met also in case the Hermite interpolation conditions are those of the local RBF-FD method reported in equation~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}.
+
+In addition, adoption of polynomial augmentation, as explained in section~\vref{sec:poly_augmentation}, to increase the accuracy of the RBF interpolant is still possible on condition of some changes. The augmented Hermite interpolant become:
+\begin{equation}
+	u^h(\cdot) = \sum_{j=1}^{m} \alpha_j \lambda_{2,j} \Phi(\cdot,\cdot) + \sum_{k=1}^{M} \beta_k p_k(\vec{\cdot})
+\end{equation}
+In order to obtain a solvable linear system to find coefficients $\vec{\alpha}$ and $\vec{\beta}$, conditions~\eqref{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation} are modified as follow:
+\begin{equation}
+	\sum_{i=1}^{m} \alpha_i \lambda_i p_k(\cdot) = 0, \qquad i=1, \dots, M
+\end{equation}
+thus leading to:
+\begin{equation}
+\underbrace{
+\begin{bmatrix}
+	\vec{B_H}  	 &  \vec{P_H}  \\
+	\vec{P_H}^T  &  \vec{0}
+\end{bmatrix}}_{\vec{M}}
+\begin{bmatrix}
+	\vec{\alpha}  \\
+	\vec{\beta}
+\end{bmatrix} = 
+\begin{bmatrix}
+	\vec{\Lambda u}  \\
+	\vec{0}
+\end{bmatrix}
+\end{equation}
+where $\vec{\Lambda u} = [\lambda_1 u, \dots, \lambda_m u]$ and $\vec{P_H}$ is defined as:
+\begin{equation}
+\vec{P_H} = 
+\begin{bmatrix}
+	\lambda_1 p_1(\cdot)  &  \dots  & \lambda_1 p_M(\cdot)  \\
+	\vdots				  & \ddots  & \vdots				\\
+	\lambda_m p_1(\cdot)  &  \dots  & \lambda_m p_M(\cdot)
+\end{bmatrix}
+\end{equation}
 
 
-
-
-
-
-
-
-
-
-
-
-
+\subsection{RBF-HFD}
 
 
 
