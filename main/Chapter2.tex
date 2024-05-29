@@ -576,7 +576,7 @@ The solution adopted in the present work to avoid this limitation is the so call
 
 During the RBF-FD method, to find the approximated solution $u^h$ valid for a given stencil $\mathcal{X}_q = \Set{\vec{x}_1, \dots, \vec{x}_m} \subseteq \mathcal{X}$, based on a point $\vec{x}_q \in \Omega$, the following interpolation conditions are enforced:
 \begin{subequations}
-	\label{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}
+	\label{eqn:interpolation_conditions_on_PDE_Hermite_Interpolation_subsection}
 	\begin{gather}
 		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,I}$}  \label{eqn:u^h_approx_u_conditions_RBF-HFD_section} \\
 		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,B}$} \label{eqn:u^h_approx_conditions_on_boundary_RBF-HFD_section}
@@ -597,7 +597,7 @@ Leveraging on these operators, interpolation condition, more generally, can be s
 	\lambda_i u^h = \lambda_i u \qquad i = 1, \dots, m
 \end{equation}
 Conditions~\eqref{eqn:Hermite_interpolation_conditions} are typically called Hermite interpolation conditions~\cite{Fasshauer:details_on_basic_functions}.
-For RBF-FD local constraints~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section} we have that $\lambda_i = \delta_{\vec{x}_i}$ for those nodes $\vec{x}_i$ that belong to $\mathcal{X}_{q,I}$ and $\lambda_i = \delta_{\vec{x}_i} \circ \frac{\partial}{\partial \vec{n}}$ for those which belong to $\mathcal{X}_{q,B}$.
+For RBF-FD local constraints~\eqref{eqn:interpolation_conditions_on_PDE_Hermite_Interpolation_subsection} we have that $\lambda_i = \delta_{\vec{x}_i}$ for those nodes $\vec{x}_i$ that belong to $\mathcal{X}_{q,I}$ and $\lambda_i = \delta_{\vec{x}_i} \circ \frac{\partial}{\partial \vec{n}}$ for those which belong to $\mathcal{X}_{q,B}$.
 
 In case of pure RBF interpolation scheme the local approximated solution $u^h$ is given by:
 \begin{equation}
@@ -643,14 +643,16 @@ which, once it is applied for interpolation, leads to an interpolation matrix:
 		\lambda_{1,m} \lambda_{2,1} \Phi(\cdot, \cdot)  &  \dots  & \lambda_{1,m} \lambda_{2,m} \Phi(\cdot, \cdot)
 	\end{bmatrix}
 \end{equation}
-which is symmetric if $\lambda_{1,j} = \lambda_{2,j}$ for $j = 1, \dots, m$. Furthermore $\vec{B_H}$ is also positive definite when the basic function $\varphi$ used to define the kernel is strictly positive definite and operators $\lambda_j$ are linearly independents~\cite{Miotti:phd_thesis}. Symmetry and positive definitiveness properties that were just referred to are met also in case the Hermite interpolation conditions are those of the local RBF-FD method reported in equation~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}.
+which is symmetric if $\lambda_{1,j} = \lambda_{2,j}$ for $j = 1, \dots, m$. Furthermore $\vec{B_H}$ is also positive definite when the basic function $\varphi$ used to define the kernel is strictly positive definite and operators $\lambda_j$ are linearly independents~\cite{Miotti:phd_thesis}. Symmetry and positive definitiveness properties that were just referred to are met also in case the Hermite interpolation conditions are those of the local RBF-FD method reported in equation~\eqref{eqn:interpolation_conditions_on_PDE_Hermite_Interpolation_subsection}.
 
 In addition, adoption of polynomial augmentation, as explained in section~\vref{sec:poly_augmentation}, to increase the accuracy of the RBF interpolant is still possible on condition of some changes. The augmented Hermite interpolant become:
 \begin{equation}
+	\label{eqn:Hermite_interpolant_plus_polynomial_augmentation}
 	u^h(\cdot) = \sum_{j=1}^{m} \alpha_j \lambda_{2,j} \Phi(\cdot,\cdot) + \sum_{k=1}^{M} \beta_k p_k(\vec{\cdot})
 \end{equation}
 In order to obtain a solvable linear system to find coefficients $\vec{\alpha}$ and $\vec{\beta}$, conditions~\eqref{eqn:orthogonality_conditions_for_square_B_in_case_of_poly_augmentation} are modified as follow:
 \begin{equation}
+	\label{eqn:orthogonality_conditions_HRBF}
 	\sum_{i=1}^{m} \alpha_i \lambda_i p_k(\cdot) = 0, \qquad i=1, \dots, M
 \end{equation}
 thus leading to:
@@ -679,17 +681,108 @@ where $\vec{\Lambda u} = [\lambda_1 u, \dots, \lambda_m u]$ and $\vec{P_H}$ is d
 \end{bmatrix}
 \end{equation}
 
+%TODO: Specifica che ora la base dipende dalle condizioni e non solo dai punti
+%TODO: Specifica differenza tra formulazione "simmetrica" e "asimmetrica"
+
 
 \subsection{RBF-HFD}
 
+The Hermite interpolant can be adopted also in Tolstykh's local approach with some modifications, that we explain in this subsection, to the original method based on RBF interpolant.
+%TODO: Tell advantages of Hermite and which problem it solves
+We remember once again that the problem that has to be solved is:
+\begin{equation}
+	\label{eqn:boundary_value_problem_RBF-HFD}
+	\begin{cases}
+		\mathcal{L} u  = f 		 & \text{in $\Omega$} \\
+		\mathcal{B} u   = g	     & \text{on $\partial\Omega$}
+	\end{cases}
+\end{equation}
+and for each internal node $\vec{x}_i$ a stencil $\mathcal{X}_i = \Set{\vec{x}_1, \dots, \vec{x}_m}$ composed of its $m$ nearest neighbors is constructed. $\mathcal{X}_i$ is then spitted in $\mathcal{X}_{i,I} = \Set{\vec{x}_1, \dots, \vec{x}_{m_I}}$ and $\mathcal{X}_{i,B} = \Set{\vec{x}_{m_I+1}, \dots, \vec{x}_{m}}$ respectively the set of stencil points that belong to the interior and boundary of the physical domain $\Omega$.
 
-
-
-
-
-
-
-
+Interpolation conditions inside the stencil are the same as those reported at the beginning of previous subsection:
+\begin{subequations}
+	\label{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}
+	\begin{gather}
+		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,I}$}  \label{eqn:u^h_approx_u_conditions_RBF-HFD_section} \\
+		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,B}$} \label{eqn:u^h_approx_conditions_on_boundary_RBF-HFD_section}
+	\end{gather}
+\end{subequations}
+At this point the interpolant or local approximated solution of the problem is defined according to the Hermite interpolation theory and takes the same form reported in equation~\eqref{eqn:Hermite_interpolant_plus_polynomial_augmentation}. Making explicit the functionals $\lambda_1, \dots, \lambda_m$ used in the definition of $u^h$ and applying it at the center of the stencil $\mathcal{X}_I$, we can write it as:
+\begin{equation}
+	\label{eqn:local_RBF-FD_interpolant}
+	u^h(\vec{x}_i) = \sum_{j=1}^{m_I} \alpha_j \Phi(\vec{x}_i, \vec{x}_j) + \sum_{j=m_I+1}^{m} \alpha_j \mathcal{B}_2\Phi(\vec{x}_i, \vec{x}_j) \sum_{k=1}^{M} \beta_k p_k(\vec{x}_i)
+\end{equation}
+where $\vec{\alpha}_I = [\alpha_1, \dots, \alpha_{m_I}]$ and $\vec{\alpha}_B = [\alpha_{m_I+1}, \dots, \alpha_{m}]$ are used to distinguish the coefficients that are associated to internal and boundary nodes. Conditions~\eqref{eqn:orthogonality_conditions_HRBF} have to be enforced on the coefficients of the expansion in order to obtain a square coefficient matrix associated to constraints~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}:
+\begin{equation}
+	\sum_{j=1}^{m_I} \alpha_j p_k(\vec{x}_j) + \sum_{j={m_I+1}}^{m} \alpha_j \mathcal{B} p_k(\vec{x}_j)= 0 \qquad k=1, \dots, M
+\end{equation}
+Due to the new form of the interpolant $u^h$, system~\eqref{eqn:interpolation_system_of_RBF-FD}, that previously had to be resolved in order to find the coefficients, now become:
+%TODO: Specifica che quello che fa cambiare il sistema non sono le condizioni (non sono cambiate), ma la diversa forma dell'intrpolante
+\begin{equation}
+\label{eqn:interpolation_system_of_RBF-HFD}
+\underbrace{
+\begin{bmatrix}
+	\vec{\Phi}_{I,I}  					  &  \vec{\mathcal{B}_2} \vec{\Phi}_{I,B}  					   &  \vec{P}_I  			   \\
+	\vec{\mathcal{B}_1} \vec{\Phi}_{B,I}  &  \vec{\mathcal{B}_1} \vec{\mathcal{B}_2} \vec{\Phi}_{B,B}  &  \vec{\mathcal{B}} \vec{P}_B  \\
+	\vec{P}_I^T							  &  \vec{\mathcal{B}} \vec{P}_B^T						 	   &  \vec{0}					
+\end{bmatrix}}_{\vec{M_{BC}}}
+\begin{bmatrix}
+	\vec{\alpha_I}  \\
+	\vec{\alpha_B}  \\
+	\vec{\beta}  	\\
+\end{bmatrix} = 
+\begin{bmatrix}
+	\vec{u}_I  \\
+	\vec{g}    \\
+	\vec{0}
+\end{bmatrix}
+\end{equation}
+Proceeding by following the same steps of the RBF-FD method we apply the linear operator $\mathcal{L}$ to the interpolant $u^h$:
+\begin{equation}
+	\label{eqn:L_of_local_RBF-HFD_interpolant}
+	\begin{aligned}
+		\mathcal{L} u^h(\vec{x}_i) & = \sum_{j=1}^{m_I} \alpha_j \mathcal{L}_1 \Phi(\vec{x}_i, \vec{x}_j) + \sum_{j=m_I+1}^{m} \alpha_j \mathcal{L}_1 \mathcal{B}_2 \Phi(\vec{x}_i, \vec{x}_j) + \sum_{k=1}^{M} \beta_k \mathcal{L} p_k(\vec{x}_i)  \\
+		& = \begin{bmatrix}
+			\vec{\alpha}_I & \vec{\alpha}_B & \vec{\beta}
+		\end{bmatrix}
+		\begin{bmatrix}
+			\mathcal{L}_1 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  			  \\
+			\mathcal{L}_1 \mathcal{B}_2 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,B})  \\
+			\mathcal{L} \vec{p}(\vec{x}_i)
+		\end{bmatrix}	
+	\end{aligned}
+\end{equation}
+Coefficient vectors $\vec{\alpha}_I$, $\vec{\alpha}_B$ and $\vec{\beta}$ obtained from equation~\eqref{eqn:interpolation_system_of_RBF-HFD} are then substituted in equation~\eqref{eqn:L_of_local_RBF-HFD_interpolant} leading to:
+\begin{equation}
+	\label{eqn:FD_like_discretization_of_L_middle_step_RBF-HFD}
+	\mathcal{L} u^h(\vec{x}_i) = 
+	\begin{bmatrix}
+		\vec{u}_I  &  \vec{g}  &  \vec{0}
+	\end{bmatrix}
+	\vec{M_{BC}}^{-T}
+	\begin{bmatrix}
+		\mathcal{L}_1 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  			  \\
+		\mathcal{L}_1 \mathcal{B}_2 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,B})  \\
+		\mathcal{L} \vec{p}(\vec{x}_i)
+	\end{bmatrix}	
+\end{equation}
+Exactly as in RBF-FD formulation the product of the last two factors of the aforementioned equation is known and the resulting vector $\vec{c}(\vec{x}_i) = \bigl[ \vec{c}_I(\vec{x}_i), \vec{c}_B(\vec{x}_i), \vec{c}_p(\vec{x}_i) \bigr]$ contains the coefficients that make up the Finite Difference-like approximation of the differential operator $ \mathcal{L}$ in a given point $\vec{x}_i$. In th is case $\vec{c}(\vec{x}_i) $ is computed by solving:
+%This time the vector of coefficients that make up the Finite Difference-like approximation of the differential operator in a given point $\vec{x}_i$ is computed by solving:
+\begin{equation}
+	\label{eqn:row_of_C_system}
+	\vec{M_{BC}}^T
+	\begin{bmatrix}
+		\vec{c}_I(\vec{x}_i)  \\
+		\vec{c}_B(\vec{x}_i)  \\
+		\vec{c}_p(\vec{x}_i)
+	\end{bmatrix} = 
+	\begin{bmatrix}
+		\mathcal{L}_1 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,I})  			  \\
+		\mathcal{L}_1 \mathcal{B}_2 \vec{\Phi}(\vec{x}_i, \mathcal{X}_{i,B})  \\
+		\mathcal{L} \vec{p}(\vec{x}_i)
+	\end{bmatrix}
+\end{equation}
+From now on the steps to build the matrix $\vec{C}_I$, that approximate $\mathcal{L}$, are the same of the local RBF-FD ones. The same applies to obtaining the values of the approximate solution of the partial differential equation at the nodes inside the domain.
 
 
 
