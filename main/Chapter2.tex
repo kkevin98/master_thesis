@@ -463,9 +463,9 @@ where $\vec{u}_I = \Set{u(\vec{x}_1), \dots, u(\vec{x}_{m_I})} \in R^{m_I}$ and 
 							  \end{bmatrix} \in \R^{m_B \times M}
 	\end{gathered}
 \end{equation}
+When Dirichlet BC are enforced, $\mathcal{B}$ becomes the identity operator in which case $\vec{M_{BC}}$ in equation~\eqref{eqn:interpolation_system_of_RBF-FD} coincides with the matrix $\vec{M}$ of the interpolation system~\eqref{eqn:general_system_from_scattred_data_interpolation_poly_augmentation} defined in section~\vref{sec:poly_augmentation}. In this case the problem is well-posed, regardless of the shape of domain $\Omega$ if the instructions presented in~\vref{sec:interpolation_prob_solution} are adhered to. However this is no-longer true in case of Neumann or Robin BCs: we are going to tackle this issue in the next section. For the time being, to proceed with the explanation of RBF-FD, we will assume that the problem is always well-posed regardless of the type of BCs applied.
 
 \medskip
-%TODO: Aggiungi nota sull'operatore B e sul tipo di condizioni al contorno
 Substituting the recently determined $\vec{\alpha}$ and $\vec{\beta}$ into equation~\eqref{eqn:L_of_local_RBF-FD_interpolant} we obtain:
 \begin{equation}
 	\label{eqn:FD_like_discretization_of_L_middle_step}
@@ -565,11 +565,12 @@ Finally, in addition to the stencil we note that the effect of its size are stil
 
 \section{RBF-HFD}
 
-In previous section we have overlooked a rather important fact for the implementation of the RBF-FD method: the invertibility of matrix $\vec{M_{BC}}$. When Dirichlet BC are enforced, $\mathcal{B}$ becomes the identity operator in which case $\vec{M_{BC}}$ in equation~\eqref{eqn:interpolation_system_of_RBF-FD} coincides with the matrix $\vec{M}$ of the interpolation system in~\eqref{eqn:general_system_from_scattred_data_interpolation_poly_augmentation}. In that case the problem is well-posed, regardless of the shape of domain $\Omega$ if the instructions presented in~\vref{sec:interpolation_prob_solution} are adhered to. However this is no-longer true in case of Neumann or Robin BC where is always possible, given a stencil, to find normal directions that make the local $\vec{M_{BC}}$ singular~\cite{Miotti:phd_thesis}.
-%TODO: Chiarisci spiegando che devi modificare la forma del dominio per trovare questa normale ??
+In previous section we have overlooked a rather important fact for the implementation of the RBF-FD method: the invertibility of matrix $\vec{M_{BC}}$. In fact is always possible, given a stencil containing boundary points on which Neumann or Robin BCs are applied, to find normal directions associated with them that make the local natrix $\vec{M_{BC}}$ in equation~\eqref{eqn:interpolation_system_of_RBF-FD} singular~\cite{Miotti:phd_thesis}.
+
 Unfortunately, simply avoiding this kind of boundary condition is not an option due to their importance in most boundary value problems of engineering interest.
 %TODO: Aggiungi reference ad altri metodi esistenti per risolvere il problema di ill-conditioning
-The solution adopted in the present work to avoid this limitation is the so called Radial Basis Functions-Hermite Finite Difference (RBF-HFD) which is unaffected by the problem related to normal directions. In this section we highlights its differences with the standard RBF-FD method and we explain how it solves the problem realted to the  why it works.
+The solution adopted in the present work to avoid this limitation is the so called Radial Basis Functions-Hermite Finite Difference (RBF-HFD).
+Within this section we present the formulation of the aforementioned method after explaining the Hermite Interpolation framework which is at its core.
 
 
 \subsection{Hermite Interpolation}
@@ -629,7 +630,7 @@ which is not symmetrical and does not satisfy, in general, the conditions of pos
 \end{equation}
 which is not symmetric due to the rows associated to $\delta_{1,\vec{x}_{i}} \circ \frac{\partial}{\partial \vec{n}}$ operators obtained from Neumann BCs. We remark once more that $\vec{B}$ would have remained symmetrical in the case of Dirichlet BCs only, since their associated operator would have been just $\delta_{1,\vec{x}_{i}}$, the same applied on the first $m_i$ rows.
 
-An improvement, alternative to polynomial augmentation, is done to the basic RBF interpolant in~\eqref{eqn:basic_pure_RBF_interpolant} in order to solve this problem: a more general interpolation basis is constructed by applying different functionals other than simple point evaluation to the same kernel $\Phi(\cdot, \cdot)$; this leads to the so-called \emph{Generalized Hermite Interpolant}. Suppose that the operator $\delta_{2, \vec{x}_j}$ of the canonical RBF base is replaced with $\lambda_{2,j}$, the functional acting on the $j$-th Hermite condition, then the interpolation basis, in general, becomes: $\Set{\lambda_{2,1} \Phi(\cdot, \cdot), \dots, \lambda_{2,m} \Phi(\cdot, \cdot)}$. The new interpolant $u^h$ defined according to the Generalized Hermite Interpolation scheme then becomes:
+An improvement, alternative to polynomial augmentation, is done to the basic RBF interpolant in~\eqref{eqn:basic_pure_RBF_interpolant} in order to solve this problem: a more general interpolation basis is constructed by applying different functionals other than simple point evaluation to the same kernel $\Phi(\cdot, \cdot)$; this leads to the so-called \emph{Generalized Hermite Interpolant}. Suppose that the operator $\delta_{2, \vec{x}_j}$ of the canonical RBF base is replaced with $\lambda_{2,j}$, the functional acting on the $j$-th Hermite condition, then the interpolation basis, in general, becomes $\Set{\lambda_{2,1} \Phi(\cdot, \cdot), \dots, \lambda_{2,m} \Phi(\cdot, \cdot)}$. In contrast to the classical scheme, the basis now does not depend solely on the nodes of the stencil to which $\Phi$ is applied, but also on the conditions associated with them: this is the key feature that differentiate this approach compared to the simple RBF one. The new interpolant $u^h$ defined according to the Generalized Hermite Interpolation scheme then becomes:
 \begin{equation}
 	\label{eqn:pure_Hermite_interpolant}
 	u^h(\cdot) = \sum_{j=1}^{m} \alpha_j \lambda_{2,j} \Phi(\cdot,\cdot)
@@ -643,7 +644,7 @@ which, once it is applied for interpolation, leads to an interpolation matrix:
 		\lambda_{1,m} \lambda_{2,1} \Phi(\cdot, \cdot)  &  \dots  & \lambda_{1,m} \lambda_{2,m} \Phi(\cdot, \cdot)
 	\end{bmatrix}
 \end{equation}
-which is symmetric if $\lambda_{1,j} = \lambda_{2,j}$ for $j = 1, \dots, m$. Furthermore $\vec{B_H}$ is also positive definite when the basic function $\varphi$ used to define the kernel is strictly positive definite and operators $\lambda_j$ are linearly independents~\cite{Miotti:phd_thesis}. Symmetry and positive definitiveness properties that were just referred to are met also in case the Hermite interpolation conditions are those of the local RBF-FD method reported in equation~\eqref{eqn:interpolation_conditions_on_PDE_Hermite_Interpolation_subsection}.
+which is symmetric if $\lambda_{1,j} = \lambda_{2,j}$ for $j = 1, \dots, m$. Because of this property, Hermite's formulation is also called \emph{symmetric}, in contrast to the classical one which is referred to \emph{unsymmetryc}. Furthermore $\vec{B_H}$ is also positive definite when the basic function $\varphi$ used to define the kernel is strictly positive definite and operators $\lambda_j$ are linearly independents~\cite{Miotti:phd_thesis}. Symmetry and positive definitiveness properties that were just referred to are met also in case the Hermite interpolation conditions are those of the local RBF-FD method reported in equation~\eqref{eqn:interpolation_conditions_on_PDE_Hermite_Interpolation_subsection}.
 
 In addition, adoption of polynomial augmentation, as explained in section~\vref{sec:poly_augmentation}, to increase the accuracy of the RBF interpolant is still possible on condition of some changes. The augmented Hermite interpolant become:
 \begin{equation}
@@ -685,9 +686,9 @@ where $\vec{\Lambda u} = [\lambda_1 u, \dots, \lambda_m u]$ and $\vec{P_H}$ is d
 %TODO: Specifica differenza tra formulazione "simmetrica" e "asimmetrica"
 
 
-\subsection{RBF-HFD}
+\subsection{Formulation}
 
-The Hermite interpolant can be adopted also in Tolstykh's local approach with some modifications, that we explain in this subsection, to the original method based on RBF interpolant.
+The Hermite interpolant can be adopted also in Tolstykh's local approach with some modifications, that we explain in this subsection.
 %TODO: Tell advantages of Hermite and which problem it solves
 We remember once again that the problem that has to be solved is:
 \begin{equation}
@@ -701,10 +702,10 @@ and for each internal node $\vec{x}_i$ a stencil $\mathcal{X}_i = \Set{\vec{x}_1
 
 Interpolation conditions inside the stencil are the same as those reported at the beginning of previous subsection:
 \begin{subequations}
-	\label{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}
+	\label{eqn:interpolation_conditions_on_PDE_RBF-HFD}
 	\begin{gather}
-		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,I}$}  \label{eqn:u^h_approx_u_conditions_RBF-HFD_section} \\
-		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,B}$} \label{eqn:u^h_approx_conditions_on_boundary_RBF-HFD_section}
+		u^h(\vec{x}_i) = u(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,I}$}  				\\
+		\mathcal{B} u^h(\vec{x}_i) = g(\vec{x}_i) \quad \text{if $\vec{x}_i \in \mathcal{X}_{q,B}$}
 	\end{gather}
 \end{subequations}
 At this point the interpolant or local approximated solution of the problem is defined according to the Hermite interpolation theory and takes the same form reported in equation~\eqref{eqn:Hermite_interpolant_plus_polynomial_augmentation}. Making explicit the functionals $\lambda_1, \dots, \lambda_m$ used in the definition of $u^h$ and applying it at the center of the stencil $\mathcal{X}_I$, we can write it as:
@@ -712,7 +713,7 @@ At this point the interpolant or local approximated solution of the problem is d
 	\label{eqn:local_RBF-FD_interpolant}
 	u^h(\vec{x}_i) = \sum_{j=1}^{m_I} \alpha_j \Phi(\vec{x}_i, \vec{x}_j) + \sum_{j=m_I+1}^{m} \alpha_j \mathcal{B}_2\Phi(\vec{x}_i, \vec{x}_j) \sum_{k=1}^{M} \beta_k p_k(\vec{x}_i)
 \end{equation}
-where $\vec{\alpha}_I = [\alpha_1, \dots, \alpha_{m_I}]$ and $\vec{\alpha}_B = [\alpha_{m_I+1}, \dots, \alpha_{m}]$ are used to distinguish the coefficients that are associated to internal and boundary nodes. Conditions~\eqref{eqn:orthogonality_conditions_HRBF} have to be enforced on the coefficients of the expansion in order to obtain a square coefficient matrix associated to constraints~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD_section}:
+where $\vec{\alpha}_I = [\alpha_1, \dots, \alpha_{m_I}]$ and $\vec{\alpha}_B = [\alpha_{m_I+1}, \dots, \alpha_{m}]$ are used to distinguish the coefficients that are associated to internal and boundary nodes. Conditions~\eqref{eqn:orthogonality_conditions_HRBF} have to be enforced on the coefficients of the expansion in order to obtain a square coefficient matrix associated to constraints~\eqref{eqn:interpolation_conditions_on_PDE_RBF-HFD}:
 \begin{equation}
 	\sum_{j=1}^{m_I} \alpha_j p_k(\vec{x}_j) + \sum_{j={m_I+1}}^{m} \alpha_j \mathcal{B} p_k(\vec{x}_j)= 0 \qquad k=1, \dots, M
 \end{equation}
