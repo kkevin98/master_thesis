@@ -40,9 +40,14 @@
 % Needed to render the cover
 \usepackage{fancyhdr}
 
+% To draw graphs
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathmorphing,backgrounds,positioning,fit,petri}  % libraries to draw graphs
+\tikzset{>=latex}  % fancy arrows
+
 % Figures and subfigures
-\usepackage{graphicx}
-\usepackage{subfigure}
+%\usepackage{graphicx}  % Removed since already loaded by tikz
+\usepackage{subfig}
 
 % Improved tables
 \usepackage{tabularx}
@@ -87,6 +92,10 @@
 \usepackage{csquotes}
 \usepackage[sorting=none]{biblatex}
 \addbibresource{bib/Bibliography.bib}
+
+% To use colors
+\usepackage{xcolor}
+\definecolor{lightgray}{gray}{0.9}
 
 % Only needed for placeholder text
 \usepackage{lipsum}

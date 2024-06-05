@@ -1,7 +1,241 @@
-\chapter{Automatic differentiation and adjoint method}
+\chapter{Adjoint method}
 
-Cos'è e come funziona la differenz. automatica
 
-Cos'è e come funziona l'aggiunto e legami con la diff. automatica
+
+\section{Automatic Differentiation}
+
+%TODO: Togli questa prima parte, comincia direttamente con il come calcolare le derivate
+%Automatic Differentiation (AD) is a family of techniques similar to but more general then backpropagation to efficiently and accurately evaluating derivatives of numeric functions expressed as computer programs. Backpropagation is a well known algorithm used in machine learning and artificial intelligence toolbox being the mainstay for training neural networks. Became popular with the work of Rumelhart in~\cite{Rumelhart:backpropagation_algo} it consists in learning the best set of weights for the network that minimize a certain objective function via an iterative procedure; to do so, for each weights update, a gradient in the weight space has to be computed. The aforementioned gradient is computed by the backpropagation of the sensitivity of the objective function at the output utilizing the chain rule to compute partial derivatives of the objective with respect to each weight. This algorithm is essentially equivalent to the derivative computation via reverse mode AD.
+
+In general there exists different ways to compute derivatives using a computer program, these are:
+\begin{description}
+	\item[Manual Differentiation] In this case \emph{analytical} derivatives are computed by hand and then are plugged into standard optimization procedures such as gradient descend. Of course doing so is time consuming and prone to error;
+	
+	\item[Numerical Differentiation] In this case finite difference methods, as the ones reported in subsection~\vref{subsec:finite_difference_methods}, are used to approximate the derivatives \emph{values}. Easy to implement it has the disadvantage to be inaccurate due to round-off and truncation errors;
+
+	\item[Symbolic Differentiation] This case addresses the weakness of both manual and numerical differentiation. \emph{Analytical} derivative expressions are automatically obtained by modern computer algebra systems such as Mathematica or SimPy [cita]. Unfortunately, often, the outcomes are plagued with the problem of ``expression swell'' which means that the resulting expressions are large, complex and cryptic;
+	% TODO: Aggiungi li problema che algorithmic control-flow viene perso
+	%TODO: cita il fatto dell'expression swell
+	\item[Automatic Differentiation] This last case refers to a family of techniques that compute derivative \emph{values} (in contrast with symbolic differentiation) by using symbolic rules of differentiation (but keeping track of derivative values as opposed to the resulting
+	expressions) through accumulation of values during code execution. The mix between symbolic and numerical differentiation gives to these methodologies an hybrid nature.
+	%TODO: they also have the advantage of for and if working
+	%TODO: There are two families
+\end{description}
+
+For the remaining of this section we will explain the details of Automatic Differentiation (AD), to do so we will look at its two (main) implementations:
+\begin{itemize}
+	\item Forward mode, also known as tangent linear mode;
+	\item Reverse mode, also known as cotangent linear mode or \emph{adjoint} mode.
+\end{itemize}
+To showcase how each of the two modes works, we show how they are applied to a function $\tilde{f} \colon \R^2 \to \R^2$ defined as:
+\begin{equation}
+	\label{eqn:example_function_for_AD}
+	\tilde{f}(x_1, x_2) = \begin{bmatrix}
+					\tilde{f}_1(x_1, x_2)  &  \tilde{f}_2(x_1, x_2)
+				  \end{bmatrix}
+\end{equation}
+with $\tilde{f}_1(x_1, x_2) = x_1 x_2 + \cos x_1$ and $\tilde{f}_2(x_1, x_2) = x_2^3 + \ln x_1 - x_2$.
+
+Before entering into the detail we notice that every function $f \colon \R^n \to \R^m$ can be rewritten as a computational graph. A computational graph is a direct graph whose nodes correspond to operations and each operation can feed its output into other operations; once the graph is fed with some variables each node become automatically function of those variables. The usual operations considered as nodes are: binary arithmetic operations, the unary sign switch and transcendental functions such as exponential, logarithm and trigonometric functions.
+Creating a computational graph for a function becomes easy by indicating with:
+\begin{itemize}
+	\item $v_{i-n}=x_i$, $i=1, \dots, n$ the input variables;
+	\item $v_i$, $i=1, \dots, l$ the intermediate variable;
+	\item $y_{m-i}=v_{l-i}$, $i=m-1, \dots, 0$ the output variables.
+\end{itemize}
+To better identify the relationship between the elementary operations which constitute a function it is helpful creating an \emph{evaluation trace}, also called Wenger list, of the function itself.
+Left-hand side of table~\ref{tab:forward_AD_example} and figure~\ref{fig:example_of_computational_graph} contains respectively the evaluation trace and the computational graph for function $\tilde{f}$.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+	[circle, inner sep=0pt, minimum size=10mm,
+	operation/.style={draw},
+	input/.style={draw=none},
+	output/.style={draw=none}, -latex, auto, semithick]
+	
+	
+	\node[operation] (v_minus_one) 				   								   {$v_{-1}$};
+	\node[operation] (v_zero)	   [below=of v_minus_one, yshift=-20mm] 		   {$v_0$};
+	\node[input]	 (x_one)	   [left=of v_minus_one] 						   {$x_1$};
+	\node[input]	 (x_two)	   [left=of v_zero] 							   {$x_2$};
+	
+	\node[operation] (v_one)       [right=of v_minus_one, xshift=5mm, yshift=10mm] {$v_1$};
+	\node[operation] (v_two)       [below=of v_one] 							   {$v_2$};
+	\node[operation] (v_three)     [below=of v_two] 							   {$v_3$};
+	\node[operation] (v_four)      [below=of v_three] 							   {$v_4$};
+	
+	\node[operation] (v_six)       [right=of v_four, xshift=5mm] 				   {$v_6$};
+	
+	\node[operation] (v_seven)     [right=of v_six, xshift=5mm, yshift=10mm] 	   {$v_7$};
+	\node[operation] (v_five)      [above=of v_seven, yshift=20mm] 			   	   {$v_5$};
+	\node[output]	 (f_one)	   [right=of v_five] 							   {$f_1(x_1,x_2)$};
+	\node[output]	 (f_two)	   [right=of v_seven] 							   {$f_2(x_1,x_2)$};
+	
+	
+	\draw [->] (x_one)		 to (v_minus_one);
+	\draw [->] (x_two)		 to (v_zero);
+	\draw [->] (v_minus_one) to (v_one);
+	\draw [->] (v_minus_one) to (v_two);
+	\draw [->] (v_minus_one) to (v_four);
+	\draw [->] (v_zero) 	 to (v_two);
+	\draw [->] (v_zero) 	 to (v_three);
+	\draw [->] (v_zero) 	 to (v_seven);
+	\draw [->] (v_one)		 to (v_five);
+	\draw [->] (v_two)		 to (v_five);
+	\draw [->] (v_three)	 to (v_six);
+	\draw [->] (v_four)	 	 to (v_six);
+	\draw [->] (v_six)		 to (v_seven);
+	\draw [->] (v_five)		 to (f_one);
+	\draw [->] (v_seven)	 to (f_two);
+\end{tikzpicture}
+\caption{Computational graph of function $\tilde{f}(x_1, x_2) = \Bigl[
+		\tilde{f}_1(x_1, x_2) \,\, \tilde{f}_2(x_1, x_2) \Bigr]$. Definitions of intermediate variables $ v_{-1}, \dots, v_7$ are given in table~\ref{tab:forward_AD_example} or~\ref{tab:backward_AD_example}}
+\label{fig:example_of_computational_graph}
+\end{figure}
+
+Using the aforementioned representations we see that every function ultimately is a composition of elementary operations. This also means that its numerical derivatives can be computed by combining all the numerical derivatives of the constituent operations through the \emph{chain rule}: this, is the main idea of AD.
+
+%TODO: 1) Talk about automatic label misconception
+%Before going ahead we would like to draw reader's attention on the risk of ambiguity that the term ``automatic'' in  AD generate. One might label as AD every technique that allows to compute derivatives without computing them manually (e.g. Symbolic Differentiation), but in technical terms AD is used to indicate only those techniques that compute derivatives through accumulation of values during code execution to generate numerical numerical derivative evaluations rather than derivative expression.
+
+%TODO: 2) Talk about that AD work also with regular code constructs
+%We also emphasize the advantage of AD that can be applied to regular code with minimal change, allowing branching, loops and recursion unlike manual and symbolic differentiation which require to arrange the code under the syntactic and semantic constraint of the obtained formulas.
+
+
+\subsection{Forward mode}
+
+In order to compute the derivative of the function $\tilde{f}$, reported in~\eqref{eqn:example_function_for_AD}, respect to $x_1$ we start by considering the evaluation trace on the left-hand side of table~\ref{tab:forward_AD_example} and we associate to each intermediate variable $ v_i$ the derivative:
+\[
+	v_i' = \frac{\partial v_i}{\partial x_1}
+\]
+Moving from top to bottom in the forward primal trace the corresponding tangent (derivative) trace, presented on the right-hand side of table~\ref{tab:forward_AD_example}, is generated by applying the chain rule to each encountered operation. After the primals $v_i$ are evaluated, also the corresponding tangents $v_i'$ are, again, from top to bottom; this gives us the desired derivatives in the final variables $v_5' = \frac{\partial y_1}{\partial x_1}$ and $v_7' = \frac{\partial y_2}{\partial x_1}$.
+%One of the advantages using this implementation is that, in just one forward pass, we obtained all the derivatives respect $x_1$.
+
+\medskip
+Forward mode can also be employed to evaluate the Jacobian of a generic function $f \colon \R^n \to \R^m$ at a point $\vec{x} = \vec{a}$ by performing $n$ distinct forward passes. By setting only one variable $x_i'=1$ and the others to zero we obtain:
+\[
+	y_j' = \frac{\partial y_j}{\partial x_i}\bigg|_{\vec{x}=\vec{a}} \qquad j=1,\dots,m.
+\]
+and reiterating for $ i=1,\dots,n$, placing the resulting vectors side by side, we eventually obtain the Jacobian of $f$:
+\[
+\vec{J}_f =
+\left.
+\begin{bmatrix}
+	\frac{\partial y_1}{\partial x_1} &  \dots  & \frac{\partial y_1}{\partial x_n}  \\
+	\vdots							  & \ddots  & \vdots							 \\
+	\frac{\partial y_m}{\partial x_n} &  \dots  & \frac{\partial y_m}{\partial x_n}
+\end{bmatrix}
+\right|_{\vec{x} = \vec{a}}
+\]
+
+Furthermore, by properly fine-tuning the values of the variables $x_1', \dots, x_n'$ is possible computing efficiently and in a matrix-free way Jacobian-vector products:
+\[
+\vec{J}_f \vec{r} =
+\begin{bmatrix}
+	\frac{\partial y_1}{\partial x_1} &  \dots  & \frac{\partial y_1}{\partial x_n}  \\
+	\vdots							  & \ddots  & \vdots							 \\
+	\frac{\partial y_m}{\partial x_n} &  \dots  & \frac{\partial y_m}{\partial x_n}
+\end{bmatrix}
+\begin{bmatrix}
+	r_1		\\
+	\vdots  \\
+	r_n
+\end{bmatrix}
+\]
+To accomplish this all that needs to be done is simply initializing $\vec{x}'=\big[x_1', \dots, x_n' \big]$ with $\vec{r}$; this result is particularly important in the evaluation of directional derivatives.
+Before moving on, it is crucial to point out that forward mode AD:
+\begin{itemize}
+	\item for a function $f \colon \R \to \R^m$ allows to evaluate all its derivatives in just one forward pass, regardless of $m$;
+	\item for a scalar field $f \colon \R^n \to \R$, the evaluation of its gradient $\nabla f = \Bigl[ \frac{\partial y}{\partial x_1}, \dots, \frac{\partial y}{\partial x_n} \Bigr]$ always require $n$ evaluations (since gradient is nothing more than a Jacobian of size $1 \times n$).
+	%TODO: Add note of the factthat that it is not advantageous respect others methods
+\end{itemize}
+This means that the here explained implementation of AD is effective during the computation of derivative for cases $f \colon \R^n \to \R^m$ where $n \ll m$. For cases $n \gg m$ \emph{reverse mode} is more beneficial; we will discover why in the following subsection.
+
+\begin{table}
+\centering
+	\begin{tabular}{cll}
+		\toprule
+		\multicolumn{3}{l}{\text{Forward Primal Trace}}  	 \\
+		$v_{-1}$ &  $=x_1$ 				  & $=2$  			 \\
+		$v_0$	 &  $=x_2$ 				  & $=3$  			 \\
+		\midrule
+		$v_1$	 &  $=\cos v_{-1}$  	  & $=\cos 2$      	 \\
+		$v_2$	 &  $=v_{-1}  v_0$  	  & $=2 \cdot 3$  	 \\
+		$v_3$	 &  $=v_0^3$  			  & $=3^3$	  	  	 \\
+		$v_4$	 &  $=\ln v_{-1}$  	  	  & $=\ln 2$  	  	 \\
+		$v_5$	 &  $=v_2 + v_1 \quad$    & $=6-0.416$   	 \\
+		$v_6$	 &  $=v_3 + v_4$  		  & $=27+0.693$  	 \\
+		$v_7$	 &  $=v_6 - v_0$  		  & $=27.693-3$  	 \\
+		\midrule
+		$y_1$	 &  $=v_5$				  & $=5.584$		 \\
+		$y_2$	 &  $=v_7$				  & $=24.693$		 \\
+		\bottomrule
+	\end{tabular}
+%	\begingroup\setlength{\fboxsep}{0pt}
+%	\colorbox{lightgray}{
+		\begin{tabular}{cll}
+			\toprule
+			\multicolumn{3}{l}{\text{Forward Tangent (Derivative) Mode}}  							 \\
+			$v'_{-1}$ 		 &  $=x'_1$						  			& $=1$  					 \\
+			$v'_0$	  		 &  $=x'_2$ 					  			& $=0$  					 \\
+			\midrule
+			$v_1'$	  		 &  $=-v_{-1}'\sin v_{-1}$  	  			& $= -\sin 2 \cdot 1$      	 \\
+			$v_2'$	  		 &  $=v_{-1}'  v_0 + v_{-1}  v_0' \quad$	& $=1 \cdot 3 + 2 \cdot 0$ 	 \\
+			$v_3'$	  		 &  $=3  v_o^2  v_0'$  						& $=3 \cdot 2^2 \cdot 0$  	 \\
+			$v_4'$	  		 &  $=v_{-1}' / v_{-1}$  			  		& $=1/2$	  	  	 		 \\
+			$v_5'$	  		 &  $=v_2' + v_1'$  		  				& $=3 - 0.909$   	 		 \\
+			$v_6'$	  		 &  $=v_3' + v_4'$  		  				& $=0+0.5$  	  			 \\
+			$v_7'$	  		 &  $=v_6' - v_0'$  		  				& $=0.5 - 0$  				 \\
+			\midrule
+			$\mathbf{y'_1}$	 &  $\mathbf{=v_5'}$				  		& $\mathbf{=2.091}$			 \\
+			$\mathbf{y'_2}$	 &  $\mathbf{=v_7'}$				  		& $\mathbf{=0.5}$			 \\
+			\bottomrule
+		\end{tabular}
+%	} \endgroup
+\caption{Forward mode AD example to evaluate the derivatives $\frac{\partial y_1}{\partial x_1}$ and $\frac{\partial y_2}{\partial x_1}$ of $\tilde{f}(x_1, x_2)$ at $[x_1, x_2] = [2,3]$. $x_1'$ and $x_2'$ are respectively set to $1$ and $0$ in order to derive only respect $x_1$. On the left is reported the forward evaluation trace, on the right the tangent one}
+\label{tab:forward_AD_example}
+\end{table}
+
+%TODO: 1) Aggiungi colore alla tabella di dx
+%TODO: 2) Aggiungi descrizione tabelle
+%TODO: 3) Aggiungi frecce alle tabelle
+
+
+
+
+
+\subsection{Reverse mode}
+
+\section{Adjoint method}
+%TODO 1: cos'è e come funziona in generale
+
+Come viene applicato in generale
+
 
 Come viene applicato il metodo dell'aggiunto nel metodo RBF-FD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
