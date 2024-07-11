@@ -104,6 +104,7 @@ Using the aforementioned representations we see that every function ultimately i
 
 
 \subsection{Forward mode}
+\label{subsec:forward_mode_AD}
 
 In order to compute the derivative of the function $\tilde{f}$, reported in~\eqref{eqn:example_function_for_AD}, respect to $x_1$ we start by considering the evaluation trace on the left-hand side of table~\ref{tab:forward_AD_example} and we associate to each intermediate variable $ v_i$ the derivative:
 \[
@@ -204,6 +205,7 @@ This means that the here explained implementation of AD is effective during the 
 %TODO: 3) Aggiungi frecce alle tabelle
 
 \subsection{Reverse mode}
+\label{subsec:reverse_mode_AD}
 
 In this case, as opposed to forward mode AD, the derivatives are propagated back from a given output. A demonstration of how it works is presented in table~\ref{tab:reverse_AD_example} where we compute the sensitivities of output $y_1 = \tilde{f}_1(x_1, x_2)$ of $\tilde{f}$ respect the inputs $x_1$ and $x_2$. Different variables, called adjoints, are associated to each variable $v_i$ of the Forward Primal Trace and each of them is defined as:
 \[
@@ -306,18 +308,66 @@ by initializing $\vec{\overline{y}}=\big[\overline{y}_1, \dots, \overline{y}_m \
 %TODO: Cita più spesso AD survey 
 
 
-\section{Adjoint method}
-
-Come viene applicato in generale
+\section{Application to design optimization}
 
 
-Come viene applicato il metodo dell'aggiunto nel metodo RBF-FD
+\subsection{Introduction}
 
+Design optimization is the process of finding the best design parameters $\vec{l} = [l_1, \dots, l_N]$ that satisfy project requirements~\cite{Matlab:design_opt}. Requirements and objectives, which are usually multiple and conflicting, are typically expressed in the form of a scalar function $J(\vec{u},\vec{l}) \colon \R^M\times\R^N \to \R$ named \emph{cost} or \emph{objective function}. $J$ depends on the design parameters $\vec{l} \in \R^N$ and the state $\vec{u} \in \R^M$ of the problem at hand; $\vec{u}$ is generally found as solution of a system of linear equations $\vec{Au} = \vec{b}$, which arise from the imposition of the constraints of the problem, where $\vec{A} \in \R^{M \times M}$ and $\vec{b} \in \R^M$ depends on some way on $\vec{l}$.
 
+This type of process is of interest since it is encountered in the most diverse fields, from computer science, where for example the proper weights of a neural network has to be found in order to minimize the error between its predicted and the desired output respect a given set of inputs, to mechanical engineering where one may want to modify the shape of an heat sink to maximize the amount of the heat transferred to the environment.
+%TODO: Aggiungi figura simile a quela dell'articolo Matlab e "citala"
+To find the best parameters for a given project a variety of iterative approaches can be pursued:
+\begin{description}
+	\item[Manual approach] where each parameter $l_1, \dots, l_N$ is adjusted one at a time. Unfortunately doing so tends to leads to suboptimal results;
+	\item[Brute-force approach] where all possible combinations of design parameters are evaluated. However, this is time-expensive and for large-scale projects, where parameters can be hundreds, thousands, or even more, optimal parameters may not be found in reasonable time-frames;
+	\item[Gradient approach] where the gradient $\frac{dJ}{d\vec{l}}$ permits both to update all the parameters $l_1, \dots, l_N$ at the same time and to disregard most of the parameter values that are sub-optimal by considering only those suggested by its direction.
+\end{description}
+For the effectiveness of the last mentioned approach, is crucial to ensure an efficient computation of the gradient $\frac{dJ}{d\vec{l}}$ which must require as few steps as possible and be efficient even for problems involving huge number of design parameters. To meet these requirements Automatic Differentiation (AD) in its reverse-mode declination is necessary.
+%TODO: adjust the end of the "paragraph"
 
+\bigskip
+Given its advantages in design optimization we have learned that using the gradient is a good course of action. To directly evaluate $\frac{dJ}{d\vec{l}}$, in case of a particular set of design parameters defined by $\vec{l}$ at a given state $\vec{u}$, we would compute:
+\begin{equation}
+	\label{eqn:generic_gradient_design_opt}
+	\frac{dJ}{d\vec{l}} = \frac{\partial J}{\partial \vec{u}}^T \frac{d\vec{u}}{d\vec{l}} + \frac{\partial J}{\partial \vec{l}}^T
+\end{equation}
+where notations $\frac{d}{dx}$ and $\frac{\partial}{\partial x}$ indicate the total and the partial derivatives respect the variable $x$ respectively.
+Of the required elements $\frac{\partial J}{\partial \vec{u}}$ and $\frac{\partial J}{\partial \vec{l}}$ can be efficiently obtained by means of reverse-mode AD, as explained in subsection~\vref{subsec:reverse_mode_AD}, since $J$ is known analytically. The matrix $\frac{d\vec{u}}{d\vec{l}}$, on the other hand, require more careful considerations.
 
+Differentiating the problem constraints $\vec{Au} = \vec{b}$ respect the parameters $\vec{l}$ gives:
+\begin{equation}
+	\frac{d\vec{A}}{d\vec{l}} \vec{u} + \vec{A} \frac{d\vec{u}}{d\vec{l}} = \frac{d\vec{b}}{d\vec{l}}
+\end{equation}
+which allows to obtain the sought term $\frac{d\vec{u}}{d\vec{l}}$ as:
+\begin{equation}
+	\label{eqn:state_sensitivity_respect_single_param}
+	\frac{d\vec{u}}{d\vec{l}} = \vec{A}^{-1} \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right)
+\end{equation}
+We recall that $\frac{d\vec{u}}{d\vec{l}}$ is a matrix of size $M \times N$ whose $j$-th column represent the sensitivity of the state $\vec{u}$ respect parameter $l_j$. In practice it is populated column-wise by solving equation~\eqref{eqn:state_sensitivity_respect_single_param} $N$ times considering the vector $\vec{l}$ as the scalar $l_j$: this gives its $j$-th column. In this process $\frac{d\vec{b}}{d\vec{l}}$ and $\frac{d\vec{A}}{d\vec{l}}$ terms can be simply obtained using AD, if known analytically, and once $\frac{d\vec{u}}{d\vec{l}}$ is computed it can be substituted in equation~\eqref{eqn:generic_gradient_design_opt} to obtain the gradient which symbolically reads as:
+\begin{equation}
+	\label{eqn:generic_gradient_design_opt_naive}
+	\frac{dJ}{d\vec{l}} = \frac{\partial J}{\partial \vec{u}}^T \left[ \vec{A}^{-1} \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right) \right]  + \frac{\partial J}{\partial \vec{l}}^T
+\end{equation}
 
+However the computational costs of this naive procedure scales linearly with the number of the design parameters $N$ since $N$ inversions of matrix $\vec{A}$ are required for a single gradient computation. We finally remark that each of these inversions has the same computational cost of solving $\vec{A} \vec{u}= \vec{b}$ for $\vec{u}$ and if the solution represent the output of a particularly time consuming computation, as a a CFD simulation is an example of, this is particularly penalizing. A more efficient gradient computation is therefore required.
 
+To do so we can employ the \emph{adjoint method} which simply consist of a smarter bracketing of the equation which gives the gradient. In fact is possible to rewrite~\eqref{eqn:generic_gradient_design_opt_naive} as:
+\begin{equation}
+	\begin{aligned}
+		\frac{dJ}{d\vec{l}} & = \left[ \frac{\partial J}{\partial \vec{u}}^T \vec{A}^{-1} \right] \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right) + \frac{\partial J}{\partial \vec{l}}^T  \\
+							& = \vec{\lambda}^T \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right) + \frac{\partial J}{\partial \vec{l}}^T
+	\end{aligned}
+\end{equation}
+where the vector $\vec{\lambda} \in \R^L$, whose elements are called \emph{adjoint variables}, can be found by solving:
+\begin{equation}
+	\label{eqn:generic_adjoint_system_design_opt}
+	\vec{A}^T \vec{\lambda} = \frac{\partial J}{\partial \vec{u}}
+\end{equation}
+
+By doing so is possible to solve the system in equation~\eqref{eqn:generic_adjoint_system_design_opt}, which is called \emph{adjoint problem}, \emph{only once} independently on the number $N$ of design parameters for each gradient computation: this significantly reduces the computational burden of the whole optimization process. Note that the adjoint problem has the same size as the problem defined by the constraints $\vec{A} \vec{u} = \vec{b}$ and the computational cost for their solution is the same.
+
+%TODO: Ingrandisci un po' le parentesi quadre
 
 
 
