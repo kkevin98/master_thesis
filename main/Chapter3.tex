@@ -235,20 +235,18 @@ In light of the previous example, it is clear that, to compute derivatives, prim
 We remark that once the backward pass is completed we get \emph{all} the sensitivities $\frac{\partial y_j}{\partial x_1}, \dots, \frac{\partial y_j}{\partial x_n}$ in one single pass; this means that for scalar fields $f \colon \R^n \to \R$ the computation of the gradient $\nabla f$ require only one application of reverse mode as opposed to the $n$ passes required in case of forward mode. Nevertheless, this advanatage comes at the cost of increased memory requirements which grows proportionally (in the worst case) to the number of operations in the evaluated function~\cite{Baydin:AD_survey}.
 
 Generalizing the reasoning to functions $f \colon \R^n \to \R^m$, similarly to how it was done in previous section, we can conclude that reverse mode AD can also be used to evaluate Jacobians at a point; in particular, since each pass of reverse AD allows to compute one row of the Jacobian, its usage is advantageous when $m \ll n$ .
-With regard to products between Jacobain and vector, reverse AD allows to compute efficiently the transposed Jacobian-vector product:
-\[
-\vec{J}_f^T \vec{r} = 
-\begin{bmatrix}
-	\frac{\partial y_1}{\partial x_1} &  \dots  & \frac{\partial y_m}{\partial x_1}  \\
-	\vdots							  & \ddots  & \vdots							 \\
-	\frac{\partial y_1}{\partial x_n} &  \dots  & \frac{\partial y_m}{\partial x_n}
-\end{bmatrix}
-\begin{bmatrix}
-	r_1 	\\
-	\vdots  \\
-	r_m
-\end{bmatrix}
-\]
+With regard to products between Jacobain and vector, reverse AD allows to compute efficiently vector-Jacobian products of type:
+\begin{equation}
+	\vec{r}^T \vec{J}_f =
+	\begin{bmatrix}
+		r_1 	& \dots  & r_m
+	\end{bmatrix}
+	\begin{bmatrix}
+		\frac{\partial y_1}{\partial x_1} &  \dots  & \frac{\partial y_1}{\partial x_n}  \\
+		\vdots							  & \ddots  & \vdots							 \\
+		\frac{\partial y_m}{\partial x_1} &  \dots  & \frac{\partial y_m}{\partial x_n}
+	\end{bmatrix}
+\end{equation}
 by initializing $\vec{\overline{y}}=\big[\overline{y}_1, \dots, \overline{y}_m \big]$ with $\vec{r}$.
 
 \begin{table}
@@ -330,7 +328,7 @@ For the effectiveness of the last mentioned approach, is crucial to ensure an ef
 Given its advantages in design optimization we have learned that using the gradient is a good course of action. To directly evaluate $\frac{dJ}{d\vec{l}}$, in case of a particular set of design parameters defined by $\vec{l}$ at a given state $\vec{u}$, we would compute:
 \begin{equation}
 	\label{eqn:generic_gradient_design_opt}
-	\frac{dJ}{d\vec{l}} = \frac{\partial J}{\partial \vec{u}}^T \frac{d\vec{u}}{d\vec{l}} + \frac{\partial J}{\partial \vec{l}}^T
+	\frac{dJ}{d\vec{l}}^T = \frac{\partial J}{\partial \vec{u}}^T \frac{d\vec{u}}{d\vec{l}} + \frac{\partial J}{\partial \vec{l}}^T
 \end{equation}
 where notations $\frac{d}{dx}$ and $\frac{\partial}{\partial x}$ indicate the total and the partial derivatives respect the variable $x$ respectively.
 Of the required elements $\frac{\partial J}{\partial \vec{u}}$ and $\frac{\partial J}{\partial \vec{l}}$ can be efficiently obtained by means of reverse-mode AD, as explained in subsection~\vref{subsec:reverse_mode_AD}, since $J$ is known analytically. The matrix $\frac{d\vec{u}}{d\vec{l}}$, on the other hand, require more careful considerations.
@@ -344,7 +342,7 @@ which allows to obtain the sought term $\frac{d\vec{u}}{d\vec{l}}$ as:
 	\label{eqn:state_sensitivity_respect_single_param}
 	\frac{d\vec{u}}{d\vec{l}} = \vec{A}^{-1} \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right)
 \end{equation}
-We recall that $\frac{d\vec{u}}{d\vec{l}}$ is a matrix of size $M \times N$ whose $j$-th column represent the sensitivity of the state $\vec{u}$ respect parameter $l_j$. In practice it is populated column-wise by solving equation~\eqref{eqn:state_sensitivity_respect_single_param} $N$ times considering the vector $\vec{l}$ as the scalar $l_j$: this gives its $j$-th column. In this process $\frac{d\vec{b}}{d\vec{l}}$ and $\frac{d\vec{A}}{d\vec{l}}$ terms can be simply obtained using AD, if known analytically, and once $\frac{d\vec{u}}{d\vec{l}}$ is computed it can be substituted in equation~\eqref{eqn:generic_gradient_design_opt} to obtain the gradient which symbolically reads as:
+We notice that $\frac{d\vec{u}}{d\vec{l}}$ is a matrix of size $M \times N$ whose $j$-th column represent the sensitivity of the state $\vec{u}$ respect parameter $l_j$. In practice it is populated column-wise by solving equation~\eqref{eqn:state_sensitivity_respect_single_param} $N$ times considering the vector $\vec{l}$ as the scalar $l_j$: this gives its $j$-th column. In this process $\frac{d\vec{b}}{d\vec{l}}$ and $\frac{d\vec{A}}{d\vec{l}}$ terms can be simply obtained using AD, if known analytically, and once $\frac{d\vec{u}}{d\vec{l}}$ is computed it can be substituted in equation~\eqref{eqn:generic_gradient_design_opt} to obtain the gradient which symbolically reads as:
 \begin{equation}
 	\label{eqn:generic_gradient_design_opt_naive}
 	\frac{dJ}{d\vec{l}} = \frac{\partial J}{\partial \vec{u}}^T \left[ \vec{A}^{-1} \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right) \right]  + \frac{\partial J}{\partial \vec{l}}^T
@@ -365,11 +363,27 @@ where the vector $\vec{\lambda} \in \R^L$, whose elements are called \emph{adjoi
 	\vec{A}^T \vec{\lambda} = \frac{\partial J}{\partial \vec{u}}
 \end{equation}
 
-By doing so is possible to solve the system in equation~\eqref{eqn:generic_adjoint_system_design_opt}, which is called \emph{adjoint problem}, \emph{only once} independently on the number $N$ of design parameters for each gradient computation: this significantly reduces the computational burden of the whole optimization process. Note that the adjoint problem has the same size as the problem defined by the constraints $\vec{A} \vec{u} = \vec{b}$ and the computational cost for their solution is the same.
+By doing so is possible to solve the system in equation~\eqref{eqn:generic_adjoint_system_design_opt}, which is called \emph{adjoint problem}, only \emph{once} independently on the number $N$ of design parameters for each gradient computation: this significantly reduces the computational burden of the whole optimization process. Note that the adjoint problem has the same size as the problem defined by the constraints $\vec{A} \vec{u} = \vec{b}$ and the computational cost for their solution is the same.
 
+\bigskip
+At this point it is worth noting that the adjoint method explained above is just a particular application of reverse mode automatic differentiation. To make the connections between the two methods clearer we note that the first computation of the  objective function's gradient, presented in equation~\eqref{eqn:generic_gradient_design_opt}, contains the following vector-Jacobian product:
+\begin{equation}
+	\label{eqn:vJp_design_opt}
+	\frac{\partial J}{\partial \vec{u}}^T \frac{d\vec{u}}{d\vec{l}}
+\end{equation}
+where $\frac{\partial J}{\partial \vec{u}}^T \in \R^M$ is the vector that multiply $\frac{d\vec{u}}{d\vec{l}} \in \R^{M \times N}$, the Jacobian of the state $\vec{u}$ respect the design parameters $\vec{l}$.
+From subsection~\vref{subsec:reverse_mode_AD} we known that AD allows to compute the resulting vector without explicitly computing the Jacobian $\frac{d\vec{u}}{d\vec{l}}$. But this is precisely what the adjoint method does through equations~(\ref{eqn:generic_gradient_design_opt} -~\ref{eqn:generic_adjoint_system_design_opt}) by first applying the chain rule to the leftmost term in the gradient formula and then parenthesizing the result in order to make the number of inversions of the matrix $\vec{A}$ independent on the number of parameters.
+The result of the whole process is then summarized by:
+\begin{equation}
+	\label{eqn:resulting_term_adjoint_method}
+	\vec{\lambda}^T \left( \frac{d\vec{b}}{d\vec{l}} - \frac{d\vec{A}}{d\vec{l}}\vec{u} \right)
+\end{equation}
+where $\vec{\lambda}$ solves equation~\eqref{eqn:generic_adjoint_system_design_opt} and the Jacobian $\frac{d\vec{u}}{d\vec{l}}$ is no more present. Furthermore the two-steps process of the reveres mode AD for the gradient computation is still there even in the adjoint method:
+\begin{itemize}
+	\item the forward pass, used for the computation of variables $v_i$ in table~\vref{tab:reverse_AD_example}, now is the single solution of the system $\vec{A}\vec{u}=\vec{b}$ in order to find the state $\vec{u}$ used in term~\eqref{eqn:resulting_term_adjoint_method};
+	\item the reverse pass, done in order to obtain the adjoint variables $\overline{v}_i$ in table~\ref{tab:reverse_AD_example}, is now equivalent to the solution of $\vec{A}^T \vec{\lambda} = \frac{\partial J}{\partial \vec{u}}$ (we would like to reiterate again that reverse and forward pass has the \emph{same} computational complexity). 
+\end{itemize}
 %TODO: Ingrandisci un po' le parentesi quadre
-
-
 
 
 
