@@ -311,10 +311,17 @@ by initializing $\vec{\overline{y}}=\big[\overline{y}_1, \dots, \overline{y}_m \
 
 \subsection{Introduction}
 
-Design optimization is the process of finding the best design parameters $\vec{l} = [l_1, \dots, l_N]$ that satisfy project requirements~\cite{Matlab:design_opt}. Requirements and objectives, which are usually multiple and conflicting, are typically expressed in the form of a scalar function $J(\vec{u},\vec{l}) \colon \R^M\times\R^N \to \R$ named \emph{cost} or \emph{objective function}. $J$ depends on the design parameters $\vec{l} \in \R^N$ and the state $\vec{u} \in \R^M$ of the problem at hand; $\vec{u}$ is generally found as solution of a system of linear equations $\vec{Au} = \vec{b}$, which arise from the imposition of the constraints of the problem, where $\vec{A} \in \R^{M \times M}$ and $\vec{b} \in \R^M$ depends on some way on $\vec{l}$.
+Design optimization is the process of finding the best design parameters $\vec{l} = [l_1, \dots, l_N]$ that satisfy project requirements~\cite{Matlab:design_opt}. Requirements and objectives, which are usually multiple and conflicting, are typically expressed in the form of a scalar function $J(\vec{u},\vec{l}) \colon \R^M\times\R^N \to \R$ named \emph{cost} or \emph{objective function}. $J$ depends on the design parameters $\vec{l} \in \R^N$ and the state $\vec{u} \in \R^M$ of the problem at hand; $\vec{u}$ is generally found as solution of a system of linear equations $\vec{Au} = \vec{b}$, which arise from the imposition of the constraints of the problem, where $\vec{A} \in \R^{M \times M}$ and $\vec{b} \in \R^M$ depends on some way on $\vec{l}$. In figure~\ref{fig:design_opt_scheme} can be found a scheme of this process.
 
 This type of process is of interest since it is encountered in the most diverse fields, from computer science, where for example the proper weights of a neural network has to be found in order to minimize the error between its predicted and the desired output respect a given set of inputs, to mechanical engineering where one may want to modify the shape of an heat sink to maximize the amount of the heat transferred to the environment.
-%TODO: Aggiungi figura simile a quela dell'articolo Matlab e "citala"
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{img/design_opt_scheme.pdf}
+	\caption{Scheme of a design optimization process. From an initial design defined by a set of parameters $\vec{l}$ the associated state $\vec{u}$ is derived. The state in conjunction with the parameters are then used to evaluate the design through a function $J$. If the objectives are met the design is kept otherwise the whole procedure is repeated with a new set of parameters obtained by modifying the previous ones by a quantity $d\vec{l}$} 
+	\label{fig:design_opt_scheme}
+\end{figure}
+
 To find the best parameters for a given project a variety of iterative approaches can be pursued:
 \begin{description}
 	\item[Manual approach] where each parameter $l_1, \dots, l_N$ is adjusted one at a time. Unfortunately doing so tends to leads to suboptimal results;
@@ -384,9 +391,6 @@ where $\vec{\lambda}$ solves equation~\eqref{eqn:generic_adjoint_system_design_o
 	\item the reverse pass, done in order to obtain the adjoint variables $\overline{v}_i$ in table~\ref{tab:reverse_AD_example}, is now equivalent to the solution of $\vec{A}^T \vec{\lambda} = \frac{\partial J}{\partial \vec{u}}$ (we would like to reiterate again that reverse and forward pass has the \emph{same} computational complexity). 
 \end{itemize}
 %TODO: Ingrandisci un po' le parentesi quadre
-
-
-
 
 
 
