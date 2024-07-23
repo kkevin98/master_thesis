@@ -512,6 +512,23 @@ The values of the approximated solution at the $N_I$ nodes of $\mathcal{X}$, i.e
 	\mathcal{L}u^h(\vec{x}_i) = \mathcal{L}u(\vec{x}_i) = f(\vec{x}_i)  \quad  \text{if $\vec{x}_i \in \mathcal{X_{i,I}}$}
 \end{equation}
 which takes the matrix form:
+%\begin{equation}
+%	\vec{C}
+%	\begin{bmatrix}
+%		u^h(\vec{x}_1)  	\\
+%		\vdots				\\
+%		u^h(\vec{x}_{N_I})	\\
+%		g(\vec{x}_{N_I+1})  \\
+%		\vdots				\\
+%		g(\vec{x}_{N}
+%	\end{bmatrix} =
+%	\begin{bmatrix}
+%		f(\vec{x}_1)  \\
+%		\vdots		  \\
+%		f(\vec{x}_{N_I}))
+%	\end{bmatrix}
+%\end{equation}
+%where the $i-th$ row of matrix $\vec{C} \in \R^{}$ is formed by the elements of the vector $\vec{c}(\vec{x}_i)$ found by solving equation~\eqref{eqn:row_of_C_system}
 \begin{equation}
 \label{eqn:discretized_version_of_PDE_using_RBF-FD}
 \vec{C}_I
@@ -769,7 +786,7 @@ Coefficient vectors $\vec{\alpha}_I$, $\vec{\alpha}_B$ and $\vec{\beta}$ obtaine
 Exactly as in RBF-FD formulation the product of the last two factors of the aforementioned equation is known and the resulting vector $\vec{c}(\vec{x}_i) = \bigl[ \vec{c}_I(\vec{x}_i), \vec{c}_B(\vec{x}_i), \vec{c}_p(\vec{x}_i) \bigr]$ contains the coefficients that make up the Finite Difference-like approximation of the differential operator $ \mathcal{L}$ in a given point $\vec{x}_i$. In th is case $\vec{c}(\vec{x}_i) $ is computed by solving:
 %This time the vector of coefficients that make up the Finite Difference-like approximation of the differential operator in a given point $\vec{x}_i$ is computed by solving:
 \begin{equation}
-	\label{eqn:row_of_C_system}
+	\label{eqn:row_of_C_system_in_RBF-HFD}
 	\vec{M_{BC}}^T
 	\begin{bmatrix}
 		\vec{c}_I(\vec{x}_i)  \\
