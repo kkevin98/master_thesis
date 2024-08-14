@@ -1,7 +1,14 @@
 \chapter{Meshless methods}
 \label{chap:meshless_methods}
 
-Meshless or Meshfree Methods (MMs) were developed to overcome the drawbacks of traditional mesh-based methods for the solution of Partial Differential Equations (PDE), where their true advantage is that ``the approximation of unknowns in the PDE is constructed based on scattered points without mesh connectivity''~\cite{Chen:meshless_overview_after_20_years}.
+Meshless or Meshfree Methods (MMs) were developed to overcome the drawbacks of traditional mesh-based methods for the solution of Partial Differential Equations (PDE), where their true advantage is that ``the approximation of unknowns in the PDE is constructed based on scattered points without mesh connectivity''~\cite{Chen:meshless_overview_after_20_years}. The conceptual difference between Mesh Based and Meshless methods can be visualized on figure~\ref{fig:mesh_vs_meshless}: the former patch the domain with some geometrical shapes while the latter only distributes nodes across the domain.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{img/mesh_vs_meshless.png}
+	\caption{$(a)$ Example of reconstruction of a PDE solution, via mesh based method, for a single finite element domain; $(b)$ approximation of the same function obtained through meshless approach. Figure taken from~\cite{Chen:meshless_overview_after_20_years}}
+	\label{fig:mesh_vs_meshless}
+\end{figure}
 
 They appeared for the first time in $1977$ with the Smooth Particle Hydrodynamics (SPH) method~\cite{Belytschko:meshless_overview}, initially used to modeling astrophysical phenomena such as exploding stars and dust clouds was later applied in solid mechanics to overcome limitations of mesh-based methods~\cite{Benz:SPH_on_solid_mechanics}. To improve accuracy, tensile instability and spatial instability of SPH many more modern MMs have been developed: the introduction of Reproducing Kernel Particle Method (RKPM)~\cite{Liu:RKPM} is a prime example of enhanced consistency and stability.
 Generalized Finite Difference (GFD) methods is another branch of numerical methods for solving PDEs that do not rely on a grid structure and many modern MMs originate from the employment of this approximation for solving PDEs.
@@ -15,7 +22,7 @@ The typical use case for MMs is the construction of an approximating field $u^{h
 		\mathcal{B} u(\vec{x})   = g(\vec{x})	     & \text{on $\partial\Omega$}
 	\end{cases}
 \end{equation}
-where $\mathcal{L}$ is a generic linear differential operator and $\mathcal{B}$ is a different linear operator used to enforce some Boundary Condition (BC) that does not necessarily involves partial derivatives. $f$ and $g$ are known functions.
+where $\mathcal{L}$ is a generic linear differential operator and $\mathcal{B}$ is a different linear operator used to enforce some Boundary Condition (BC) that does not necessarily involves partial derivatives; $f$ and $g$ are known functions.
 Usually in the Computational Fluid Mechanics (CFD) world the encountered BC are:
 \begin{align}
 	& \text{Dirichlet BC:} & u=g  \\
@@ -55,33 +62,7 @@ where $i=1, \dots, N$. From the choice of functions $\Gamma_i$ the following two
 
 Finally, once constraints~\eqref{eqn:constraints_to_integrate_MMs_errors_to_zero} are enforced, the solution of problem~\eqref{eqn:generic_continous_PDE}, i.e. the values $\Set{u^h(\vec{x}_1), \dots, u^h(\vec{x}_N)}$, can be found solving the linear system  resulting from PDE's discretization. We remark that the system obtained is not linear in general, but it is in this case since the PDE is linear. Nevertheless, also non-linear PDEs can be reduced to the aforementioned case thanks to a proper linearization.
 
-\section{Motivation of case study}
-% Ha senso lasciarlo qui il caso di studio?? Meglio dopo spiegazione RBF??
-\label{sec:motivation_of_case_study}
-In this section we motivate the specific case that will be studied in the following chapters: the generic heat equation with internal heat generation~\cite{Brezis:functional_analysis_book} at steady state given by
-\begin{equation}
-	\label{eq:Poisson_equation}
-	\begin{cases}
-		- \Delta u(\vec{x}) = f(\vec{x})														 &  \text{in $\Omega$}							\\
-		u(\vec{x}) = g(\vec{x})  																		&  \text{on $\partial\Omega$}
-	\end{cases}
-\end{equation}
-The reason behind this choice are due to both its wide range of applications in different areas	(e.g. electrostatic, chemistry, gravitation and others) and the simplicity of its analytical manipulation. Equation~\eqref{eq:Poisson_equation} is one of the many PDEs that can be solved using the meshless approaches.
-
-In particular for this thesis we will:
-\begin{itemize}
-	\item consider domains $\Omega \subset \R^{d}$ with $d=1,3$;
-	\item use RBFs augmented with polynomial terms as basis functions $B_k$ to approximate the solution $u$ in a similar way to what has been done in~\cite{Liu:Intro_to_meshfree_methods}; 
-	\item formulate the problem in its strong form, so we will use the collocation technique in combination with the Weighted Residual Method.
-\end{itemize}
-thus we will apply the RBF-generated Finite Differences (RBF-FD)~\cite{Fornberg:RBF-FD_1, Fornberg:RBF-FD_2} to solve~\eqref{eq:Poisson_equation} in one and three dimensional physics domain.
-% "Collocation methods with Weighted Residual Methods" Cioè prima hai citato i collocation, ma i weighted residual da dove saltano fuori?? Da spiegare meglio/togliere??
-
-Mono dimensional physics domain are used to gain confidence with the techniques explained while three dimensional  domain are used for their application in real case problems as those faced at Esteco. $2$D cases, instead, have been skipped in the analysis since they would only be used to bridge the 2 previous scenarios and therefore would have had no practical utility.
-
-RBFs are used for scattered data interpolation both for their physical foundation[overview 20, Hardy 1990] and for their profitable use in applications like meteorology, turbulence analysis and neural network~\cite{Chen:meshless_overview_after_20_years}
-
-Finally, collocation technique is employed because thanks to its ability to discretize the Boundary Value problem~\eqref{eq:Poisson_equation} expressed in strong form leads to a real fully meshless approach~\cite{Miotti:RBF_in_depth}.
+%\section{Motivation of case study}
 
 %\section{RBF-FD method}
 %
