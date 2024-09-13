@@ -322,7 +322,7 @@ To give a concrete example we could approximate $u'(\overline{x})$ with the foll
 		D_- u(\overline{x}) & = \frac{u(\overline{x}) - u(\overline{x}-h)}{h}  \label{eqn:backward_FD_approx}
 	\end{align}
 \end{subequations}
-for some value of $ h$. This is motivated by the standard definition of the derivative as the limiting value of this expression as $h \to 0$. In these cases the same FD weights, $\Set{1/h, - 1/h}$, are associated to function values coming from different samples: $\Set{u(\overline{x}+h), u(\overline{x})}$ for equation~\eqref{eqn:forward_FD_approx} and $\Set{u(\overline{x}), u(\overline{x}-h)}$ for~\eqref{eqn:backward_FD_approx}. Another possibility is to use the centered approximation:
+for some value of $h$. This is motivated by the standard definition of the derivative as the limiting value of this expression as $h \to 0$. In these cases the same FD weights, $\Set{1/h, - 1/h}$, are associated to function values coming from different samples: $\Set{u(\overline{x}+h), u(\overline{x})}$ for equation~\eqref{eqn:forward_FD_approx} and $\Set{u(\overline{x}), u(\overline{x}-h)}$ for~\eqref{eqn:backward_FD_approx}. Another possibility is to use the centered approximation:
 \begin{equation}
 	D_0 u(\overline{x}) = \frac{u(\overline{x}+h) - u(\overline{x}-h)}{h} = \frac{1}{2} \bigl( D_+ u(\overline{x}) + D_- u(\overline{x}) \bigr)
 \end{equation}
@@ -333,9 +333,9 @@ To derive approximations to higher order derivatives, besides the two method men
 \end{equation}
 where FD weights $\Set{1/h^2, -2/h^2, 1/h^2}$ are associated to $\Set{u(\overline{x}+h), u(\overline{x}), u(\overline{x}-h)}$.
 
-%TODO: Ci manca una frase che fa da collante con il capitolo Formulation
+%TODO: Ci manca una frase che fa da collante con il capitolo formulation
 
-\subsection{Formulation}
+\subsection{Mathematical formulation}
 \label{subsec:RBF-FD_formulation}
 
 After this very brief introduction to finite difference (FD), we can see how they are generalized to PDEs differential operators by RBF-FD in order to obtain easily solvable linear systems.
@@ -506,11 +506,13 @@ where $\vec{c}_I(\vec{x}_i)$, $\vec{c}_B(\vec{x}_i)$ and $\vec{c}_p(\vec{x}_i)$ 
 Once this is done~\eqref{eqn:FD_like_discretization_of_L_middle_step} can be rewritten as:
 \begin{equation}
 	\begin{aligned}
+		\label{eqn:FD_like_discretization_of_L}
 		\mathcal{L} u^h(\vec{x}_i) & = \vec{c}_I(\vec{x}_i)^T \vec{u}_I + \vec{c}_B(\vec{x}_i)^T \vec{g}  \\[2ex]
 								   & = \sum_{j=1}^{m_I} c_j(\vec{x}_i) u(\vec{x}_j) + \sum_{k=m_I+1}^{m} c_k(\vec{x}_i)g(\vec{x}_k)
 	\end{aligned}
 \end{equation}
-which is nothing else but the FD-like approximation of $\mathcal{L}u^h$ at point $\vec{x}_i$ with FD weights given by the elements of the vectors $\vec{c}_I(\vec{x}_i)$ and $\vec{c}_P(\vec{x}_i)$. In general the approximation is not exact, however it is in this specific case thanks to the combination of:
+which is nothing else but the FD-like approximation of $\mathcal{L}u^h$ at point $\vec{x}_i$ with FD weights given by the elements of the vectors $\vec{c}_I(\vec{x}_i)$ and $\vec{c}_P(\vec{x}_i)$.
+Finally we remark that, in this specific case, we can write equation~\eqref{eqn:FD_like_discretization_of_L} thanks to the combination of:
 \begin{itemize}
 	\item the linearity of $u^h$ respect the parameters $\alpha_1, \dots, \alpha_m$ and $\beta_1, \dots, \beta_M$, as can be seen in equation~\eqref{eqn:local_RBF-FD_interpolant}, and;
 	\item the linearity of operator $\mathcal{L}$.
@@ -708,7 +710,7 @@ where $\vec{\Lambda u} = [\lambda_1 u, \dots, \lambda_m u]$ and $\vec{P}_H$ is d
 \end{equation}
 
 
-\subsection{Formulation}
+\subsection{Mathematical formulation}
 
 The Hermite interpolant can be adopted also in Tolstykh's local approach with some modifications, that we explain in this subsection.
 %TODO: Tell advantages of Hermite and which problem it solves

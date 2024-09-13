@@ -1,12 +1,17 @@
 \chapter{Adjoint method}
 
+In this chapter we are going to discuss the adjoint method: a specific application of reverse mode automatic differentiation which allows to compute efficiently the gradient of a function which depends on many parameters.
 
+To do so we introduce to the possible techniques that allows to compute derivatives using a computer program with particular focus on Automatic Differentiation (AD), highlighting its advantages and its two main implementations.
+Subsequently, we will provide a brief overview of design optimization in order to justify the interest in implementing the aforementioned method.
+Finally, we conclude the chapter explaining in detail the application of the adjoint method in case of design optimization problems that rely on RBF-FD method for the design analysis stage.
 
 \section{Automatic Differentiation (AD)}
 
 %TODO: Togli questa prima parte, comincia direttamente con il come calcolare le derivate
 %Automatic Differentiation (AD) is a family of techniques similar to but more general then backpropagation to efficiently and accurately evaluating derivatives of numeric functions expressed as computer programs. Backpropagation is a well known algorithm used in machine learning and artificial intelligence toolbox being the mainstay for training neural networks. Became popular with the work of Rumelhart in~\cite{Rumelhart:backpropagation_algo} it consists in learning the best set of weights for the network that minimize a certain objective function via an iterative procedure; to do so, for each weights update, a gradient in the weight space has to be computed. The aforementioned gradient is computed by the backpropagation of the sensitivity of the objective function at the output utilizing the chain rule to compute partial derivatives of the objective with respect to each weight. This algorithm is essentially equivalent to the derivative computation via reverse mode AD.
 
+In this section we take 
 In general there exists different ways to compute derivatives using a computer program, these are:
 \begin{description}
 	\item[Manual Differentiation] In this case \emph{analytical} derivatives are computed by hand and then are plugged into standard optimization procedures such as gradient descend. Of course doing so is time consuming and prone to error.
@@ -15,7 +20,7 @@ In general there exists different ways to compute derivatives using a computer p
 
 	\item[Symbolic Differentiation] This case addresses the weakness of both manual and numerical differentiation. \emph{Analytical} derivative expressions are automatically obtained by modern computer algebra systems such as Mathematica\footnote{Wolfram Research, Inc.'s proprietary software for technical computing. See~\url{https://www.wolfram.com/mathematica/} for more informations.} or SymPy\footnote{Python open source library for symbolic mathematics. The project can be found at~\url{https://www.sympy.org/en/index.html}.}. Unfortunately, often, the outcomes are plagued with the problem of ``expression swell'' which means that the resulting expressions are large, complex and cryptic. Furthermore it can be applied only to models defined in closed-form.
 	
-	\item[Automatic Differentiation] This last case refers to a family of techniques that compute derivative \emph{values} (in contrast with symbolic differentiation) by using symbolic rules of differentiation (but keeping track of derivative values as opposed to the resulting expressions) through accumulation of values during code execution. Thanks to this, automatic differentiation, can be applied to code involving branches, loops and recursion as opposed to symbolic differentiation~\cite{Baydin:AD_survey}. The mix between symbolic and numerical differentiation gives to these methodologies an hybrid nature.
+	\item[Automatic Differentiation] This last case refers to a family of techniques that compute derivative \emph{values} (in contrast with symbolic differentiation) by using symbolic rules of differentiation (but keeping track of derivative values as opposed to the resulting expressions) through accumulation of values during code execution. Thanks to this, Automatic Differentiation (AD), can be applied to code involving branches, loops and recursion as opposed to symbolic differentiation~\cite{Baydin:AD_survey}. The mix between symbolic and numerical differentiation gives to these methodologies an hybrid nature.
 \end{description}
 
 For the remaining of this section we will explain the details of Automatic Differentiation (AD), to do so we will look at its two (main) implementations:
@@ -140,7 +145,7 @@ Left-hand side of table~\ref{tab:forward_AD_example} and figure~\ref{fig:example
 	\label{tab:forward_AD_example}
 \end{table}
 
-Using the aforementioned representations we see that every function ultimately is a composition of elementary operations. This also means that its numerical derivatives can be computed by combining all the numerical derivatives of the constituent operations through the \emph{chain rule}: this, is the main idea of Automatic Differentiation (AD).
+Using the aforementioned representations we see that every function ultimately is a composition of elementary operations. This also means that its numerical derivatives can be computed by combining all the numerical derivatives of the constituent operations through the \emph{chain rule}: this, is the main idea of Automatic Differentiation.
 
 %TODO: 1) Talk about automatic label misconception
 %Before going ahead we would like to draw reader's attention on the risk of ambiguity that the term ``automatic'' in  AD generate. One might label as AD every technique that allows to compute derivatives without computing them manually (e.g. Symbolic Differentiation), but in technical terms AD is used to indicate only those techniques that compute derivatives through accumulation of values during code execution to generate numerical numerical derivative evaluations rather than derivative expression.
@@ -195,7 +200,7 @@ Before moving on, it is crucial to point out that forward mode AD:
 	\item for a scalar field $f \colon \R^n \to \R$, the evaluation of its gradient $\nabla f = \Bigl[ \frac{\partial y}{\partial x_1}, \dots, \frac{\partial y}{\partial x_n} \Bigr]$ always require $n$ evaluations (since gradient is nothing more than a Jacobian of size $1 \times n$).
 	%TODO: Add note of the factthat that it is not advantageous respect others methods (FD methods also scales linearly??)
 \end{itemize}
-This means that the here explained implementation of Automatic Differentiation has a computational cost which scales linearly with the number of function inputs. It is effective during the computation of derivative for cases $f \colon \R^n \to \R^m$ where $n \ll m$; for cases $n \gg m$ \emph{reverse mode} is more beneficial: we will discover why in the next subsection.
+This means that the here explained implementation of Automatic Differentiation (AD) has a computational cost which scales linearly with the number of function inputs. It is effective during the computation of derivative for cases $f \colon \R^n \to \R^m$ where $n \ll m$; for cases $n \gg m$ \emph{reverse mode} is more beneficial: we will discover why in the next subsection.
 
 %TODO: 1) Aggiungi colore alla tabella di dx
 %TODO: 2) Aggiungi descrizione tabelle
@@ -204,11 +209,14 @@ This means that the here explained implementation of Automatic Differentiation h
 \subsection{Reverse mode}
 \label{subsec:reverse_mode_AD}
 
-In this case, as opposed to forward mode AD, the derivatives are propagated back from a given output. A demonstration of how it works is presented in table~\ref{tab:reverse_AD_example} where we compute the sensitivities of output $y_1 = \tilde{f}_1(x_1, x_2)$ of $\tilde{f}$ respect the inputs $x_1$ and $x_2$. Different variables, called adjoints, are associated to each variable $v_i$ of the Forward Primal Trace and each of them is defined as:
+In this case, as opposed to forward mode AD, the derivatives are propagated back from a given output: this means that the underlying mechanism is similar, yet more general, to backpropagation algorithm used in neural networks.
+%A demonstration of how it works is presented in table~\ref{tab:reverse_AD_example} where we compute the sensitivities, i.e. of output $y_1 = \tilde{f}_1(x_1, x_2)$ of $\tilde{f}$ respect the inputs $x_1$ and $x_2$.
+
+To do so, different variables, called adjoints, are associated to each variable $v_i$ of the Forward Primal Trace and each of them is defined as:
 \[
-\overline{v}_i = \frac{\partial y_1}{\partial v_i}
+\overline{v}_i = \frac{\partial y_j}{\partial v_i}
 \]
-An adjoint variable is nothing more than the sensitivity of the output $y_1$ with respect to changes in $v_i$. It is important for the reader to note that, with this mode, the variable with respect to the derivatives are computed is not fixed as in forward mode AD.
+which is nothing more than the sensitivity of the output $y_j$ with respect to changes in $v_i$. It is important for the reader to note that, with this mode, the variable with respect to the derivatives are computed is not fixed as in forward mode AD. An example of reverse mode AD is presented in table~\ref{tab:reverse_AD_example} where we show how to compute the sensitivities of the output $y_1 = \tilde{f}_1(x_1, x_2)$ respect the inputs $x_1$ and $x_2$.
 
 \begin{table}
 	\centering
@@ -304,14 +312,24 @@ by initializing $\vec{\overline{y}}=\big[\overline{y}_1, \dots, \overline{y}_m \
 \section{Application to design optimization}
 \label{sec:application_to_design_opt}
 
-Design optimization is the process of finding the best design parameters $\vec{l} = [l_1, \dots, l_N]$ that satisfy project requirements~\cite{Matlab:design_opt}. Requirements and objectives, which are usually multiple and conflicting, are typically expressed in the form of a scalar function $J \colon \R^M\times\R^N \to \R$ named \emph{cost} or \emph{objective function}. $J$ depends on the state $\vec{u} \in \R^M$ of the problem at hand and the design parameters $\vec{l} \in \R^N$; $\vec{u}$ is generally found as solution of a system of linear equations $\vec{Au} = \vec{b}$, which arise from the imposition of the constraints of the problem, where $\vec{A} \in \R^{M \times M}$ and $\vec{b} \in \R^M$ depends on some way on $\vec{l}$. In figure~\ref{fig:design_opt_scheme} can be found a scheme of the whole process.
+Design optimization is a topic that spans multiple disciplines, examples include, but are not limited to: wing configuration in aerospace, structural design in civil engineering, circuit design in electrical engineering, mechanism design in mechanical engineering and neural networks sizing and arches weighting in computer science.
+An example of the results that can be achieved through design optimization is shown in figure~\ref{fig:wing_opt}.
 
-This type of process is of interest since it is encountered in the most diverse fields, from computer science, where for example the proper weights of a neural network has to be found in order to minimize the error between its predicted and the desired output respect a given set of inputs, to mechanical engineering where, for example, one may want to modify the shape of an heat sink to maximize the amount of the heat transferred to the environment.
+\begin{figure}
+	\centering
+	\includegraphics[width=.5\textwidth]{img/wing_opt.png}
+	\caption{Example of design optimization: baseline and final design of ONERA M6 wing is shown. It can be seen how the relative pressure exerted by the air on the wing has been minimized. Figure taken from~\cite{Bombardieri:paper_of_wing_opt_image}}
+	\label{fig:wing_opt}
+\end{figure}
+
+From a formal point of view it is the process of finding the best design parameters $\vec{l} = [l_1, \dots, l_N]$ that satisfy project requirements~\cite{Matlab:design_opt}. Requirements and objectives, which are usually multiple and conflicting, are typically expressed in the form of a scalar function $J \colon \R^M\times\R^N \to \R$ named \emph{cost} or \emph{objective function}. $J$ depends on the state $\vec{u} \in \R^M$ of the problem at hand and on the design parameters $\vec{l} \in \R^N$; $\vec{u}$ is generally found as solution of a system of linear equations $\vec{Au} = \vec{b}$, which arise from the imposition of the constraints of the problem, where $\vec{A} \in \R^{M \times M}$ and $\vec{b} \in \R^M$ depends on some way on $\vec{l}$. In figure~\ref{fig:design_opt_scheme} can be found a scheme of the whole process.
+
+%This type of process is of interest since it is encountered in the most diverse fields, from computer science, where for example the proper weights of a neural network has to be found in order to minimize the error between its predicted and the desired output respect a given set of inputs, to mechanical engineering where, for example, one may want to modify the shape of an heat sink to maximize the amount of the heat transferred to the environment.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=\textwidth]{img/design_opt_scheme.pdf}
-	\caption{Scheme of a design optimization process. From an initial design defined by a set of parameters $\vec{l}$ the associated state $\vec{u}$ is derived. The state in conjunction with the parameters are then used to evaluate the design through a function $J$. If the objectives are met the design is kept otherwise the whole procedure is repeated with a new set of parameters obtained by modifying the previous ones by a quantity $d\vec{l}$} 
+	\caption{Scheme of a design optimization process. From an initial design defined by a set of parameters $\vec{l}$ the associated state $\vec{u}$ is derived. The state in conjunction with the parameters are then used to evaluate the design through a function $J$. If the objectives are met the design is kept otherwise the whole procedure is repeated with a new set of parameters obtained by modifying the previous ones by a quantity $\Delta\vec{l}$} 
 	\label{fig:design_opt_scheme}
 \end{figure}
 
@@ -369,7 +387,7 @@ where the vector $\vec{\lambda} \in \R^L$, whose elements are called \emph{adjoi
 By doing so is possible to solve the system in equation~\eqref{eqn:generic_adjoint_system_design_opt}, which is called \emph{adjoint problem}, only \emph{once} independently on the number $N$ of design parameters for each gradient computation: this significantly reduces the computational burden of the whole optimization process. Bear in mind that the adjoint problem has the same size as the problem defined by the constraints $\vec{A} \vec{u} = \vec{b}$ and the computational cost for their solution is the same.
 
 \bigskip
-At this point it is worth noting that the adjoint method explained above is just a particular application of reverse mode Automatic Differentiation (AD). To make the connections between the two methods clearer we note that the first computation of the  objective function's gradient, presented in equation~\eqref{eqn:generic_gradient_design_opt}, contains the following vector-Jacobian product:
+At this point it is worth noting that the adjoint method explained above is just a particular application of reverse mode AD. To make the connections between the two methods clearer we note that the first computation of the  objective function's gradient, presented in equation~\eqref{eqn:generic_gradient_design_opt}, contains the following vector-Jacobian product:
 \begin{equation}
 	\label{eqn:vJp_design_opt}
 	\frac{\partial J}{\partial \vec{u}}^T \frac{d\vec{u}}{d\vec{l}}
@@ -394,6 +412,7 @@ After this concise overview of the adjoint method applied to generic design opti
 \section{Application to RBF-FD}
 
 In section~\ref{sec:RBF-FD} we have seen how the RBF-FD solver for Partial Differential Equations (PDEs) is implemented. Computational Fluid Dynamics (CFD), where PDEs are employed to model fluid flow and heat transfer problems, is one of the main areas where the application of the RBF-FD method could bring great benefits.
+CFD is one of the main engineering application where design optimization problems arises almost naturally. However the computational cost of the optimization in the analysis hase is very high it would be of interest apply the adjoint method in those problema
 
 %In section~\ref{sec:RBF-FD} we have seen how the RBF-FD solver for Partial Differential Equations (PDEs) is implemented. Computational Fluid Dynamics (CFD), where PDEs involve fluid flows and heat transfers, is one of the main areas of its application. In all these cases design optimization problems arises almost naturally: regarding heat transfers we have already mentioned the heath sink case where heath exchanged with the environment should be maximized, as to fluid flows a typical example is to find the best shape for the wings of an aircraft in order to maximize its lift and/or minimize its drag.
 
@@ -438,7 +457,8 @@ Once more, what is now lacking is the term $\frac{d\vec{u}_I}{d\vec{l}}$. The se
 	\frac{d\vec{C}_I}{d\vec{l}} \vec{u}_I + \vec{C}_I \frac{d\vec{u}_I}{d\vec{l}} + \frac{d\vec{C}_B}{d\vec{l}} \vec{u}_B + \vec{C}_B \frac{d\vec{u}_B}{d\vec{l}} =
 	\frac{d\vec{f}}{d\vec{l}}
 \end{equation} 
-Before proceeding a note on the matrix $\frac{d\vec{u}_B}{d\vec{l}}$ could be useful: one might think that it should not be present since values in $\vec{u}_B$ are fixed from boundary conditions of the problem~\eqref{eqn:boundary_value_problem} (i.e. they are not dependent on the design parameters). The previous statements holds true only for Dirichlet Boundary Conditions (BCs), but not in general since in case of Neumann and Robin BCs the values of $\vec{u}_B$ depends also on their normal derivatives respect to the surface $\partial\Omega$ whose shape depends on $\vec{l}$. This simply means that only the rows of $\frac{d\vec{u}_B}{d\vec{l}}$ associated to Dirichlet points will make up of zeros elements.
+Before proceeding a note on the matrix $\frac{d\vec{u}_B}{d\vec{l}}$ could be useful: one might think that it should not be present since values in $\vec{u}_B$ are fixed from boundary conditions of problem~\eqref{eqn:boundary_value_problem} (i.e. they are not dependent on the design parameters).
+Nevertheless the previous statement does not hold in general since the values of $\vec{u}_B$ could directly depend on the design variables (as an example one may think of Dirichlet Boundary Conditions (BCs) defined by $u(\vec{x})=g(\vec{x}, \vec{l})$) or indirectly depend on them through the problem geometry (e.g. Neumann or Robin BCs).
 
 Once $\frac{d\vec{u}_I}{d\vec{l}}$ is isolated from the previous equation it can be plugged in~\eqref{eqn:gradient_1st_step_1D_RBF-FD} which in turns become:
 \begin{equation}
@@ -462,6 +482,7 @@ The unknown terms involving derivatives computation on the right-hand side can b
 %Taking a moment to consider the matrix $\frac{d\vec{C}}{d\vec{l}} \vec{u} \in \R^{N \times L}$ we can note that is obtained from a product between a rank-3 tensor 
 In order to examine it more closely we can define a matrix $\vec{Q} \in \R^{N_I \times L}$ as follows:
 \begin{equation}
+	\label{eqn:Q_matrix_definition}
 	\vec{Q} = \frac{d\vec{C}}{d\vec{l}} \vec{u}
 \end{equation}
 whose elements $q_{i,j}$ are given by:
@@ -474,6 +495,7 @@ To obtain $\frac{d\vec{C}}{d\vec{l}} \vec{u}$ is thus sufficient to compute each
 
 Recall that elements that make up the $i$-th row of $\vec{C}$ are found by solving the local system~\eqref{eqn:row_of_C_system}:
 \begin{equation}
+	\label{eqn:local_RBF-FD_system_adjoint_1D}
 	\vec{M}_{BC}^T
 	\begin{bmatrix}
 		\vec{c}_I(\vec{x}_i)  \\
@@ -622,7 +644,247 @@ In light of what we have been observed we are now able to compute the whole grad
 
 \subsection{3D}
 
+Now, unlike in the 1D case, we consider only cost functions which describes a flux integral, i.e. functions that can be reduced into a form similar to:
+\begin{equation}
+	J_c = \frac{1}{\abs{A_c}} \int_A \frac{\partial u}{\partial \vec{n}} \, ds
+\end{equation}
+where $\abs{A_c} \in \R$ indicates the area of the surface $A$ over which the integral is calculated, $\vec{n}$ is the normal of the surface and $u$ is a scalar field.
 
+Since in practice the physical domains are typically described by means of \verb*|.stl| files, we will not deal with continuous quantities and the integral will therefore be approximated by the following finite sum:
+\begin{equation}
+	J = \frac{1}{\abs{A}} \sum_{j \in \mathcal{T}} \nabla \vec{u}(\vec{x}_j)^T \vec{a}_j
+\end{equation}
+where $\abs{A} \in \R$ is still the area of the surface $A$, this time computed as sum of the areas of each small stl triangle that composes it, $\mathcal{T}$ is the set of the indices of these triangles and each of them is identified by a single index $j$; $\vec{x}_j \in \R^3$ and $\vec{a}_j \in \R^3$ denotes respectively the centroid and the area vector of the $j$-th triangle, where $\vec{a}_j$ has direction given by the normal and modulus equal to the surface of the $j$-th triangle.
+$\nabla \vec{u}(\vec{x}_j)^T \in \R^3$ indicates the row-vector representing the gradient of the field $u$ computed at centroid $\vec{x}_j$.
+
+
+% Aggiungi che lo stach di questi vettori poi ti da la matrice.
+
+\smallskip
+%TODO: Specifica il fatto che dentro i vettori u_j ci possono essere anche i valori di g (nella parte RBF-FD questa parte è più esplicita con i vettori [u, g, 0])
+%The row vector $\nabla \vec{u}(\vec{x}_j)^T$ can be found through a local RBF-FD approximation as:
+%\begin{equation}
+%	\nabla \vec{u}(\vec{x}_j)^T =
+%	\begin{bmatrix}
+%		c_x^T(\vec{x}_j) \vec{u}_j  &  c_y^T(\vec{x}_j) \vec{u}_j  &  c_z^T(\vec{x}_j) \vec{u}_j
+%	\end{bmatrix}
+%\end{equation}
+%which require the creation of a stencil $\mathcal{X}_j$ centered at centroid $\vec{x}_j$. To do so an initial application of the RBF-FD method is required in order to have 
+Before proceeding we point out how $\nabla \vec{u}(\vec{x}_j)^T$ is computed. At first one might think to obtain it using the RBF-FD method based on $N$ nodes scattered over the physical domain as explained in subsection~\vref{subsec:RBF-FD_formulation}. However this is not the right approach, in fact by following the aforementioned procedure is possible to approximate the gradient on the RBF-FD nodes only and since the centroids of the triangles are independent from the latter another approach is required. 
+
+After an initial application of the RBF-FD method based on $N$ nodes scattered all over the physical domain, which are, in general, unrelated to the triangular centroids, the row vector $\nabla \vec{u}(\vec{x}_j)^T$ can be found through another local RBF-FD approximation as:
+\begin{equation}
+	\nabla \vec{u}(\vec{x}_j)^T =
+	\begin{bmatrix}
+		c_x^T(\vec{x}_j) \vec{u}_j  &  c_y^T(\vec{x}_j) \vec{u}_j  &  c_z^T(\vec{x}_j) \vec{u}_j
+	\end{bmatrix}
+\end{equation}
+which require the creation of a stencil $\mathcal{X}_j$ centered at $\vec{x}_j$. The $m$ neighboring nodes that constitute it are taken from those used in the first RBF-FD application. $\vec{u}_j \in \R^m$ is the vector with the values of the field $u$ at the nodes of the stencil and $c_x^T(\vec{x}_j)$, $c_y^T(\vec{x}_j)$ and $c_z^T(\vec{x}_j)$ are the vectors composed by the first $m$ coefficients obtained from the solution of equation~\eqref{eqn:row_of_C_system_in_RBF-HFD} respectively when the associated differential operator $\mathcal{L}$ in the equation is $\partial / \partial x$, $\partial / \partial y$ or $\partial / \partial z$.
+
+%TODO: magari specifica che c_x non è esattamente lo stesso c che abbiamo trovato nel capitolo RBF-FD, qui non abbiamo gli elementi associati al polinomio
+%TODO: aggiungi 2 parole sul problema di ottenere nablau(xj) dato che xj non appartiene ai nodi RBF-FD è richijesto un altro giro di RBF-FD
+If we further concatenate along rows the vectors $\nabla \vec{u}(\vec{x}_j)^T$ associated to each triangle we would obtain the matrix:
+\begin{equation}
+	\label{eqn:field_gradient_at_centroids}
+		\nabla \vec{u} =
+			\begin{bmatrix}
+				c_x^T(\vec{x}_1) \vec{u}_1  &  c_y^T(\vec{x}_1) \vec{u}_1  &  c_z^T(\vec{x}_j) \vec{u}_j  							\\
+				\vdots						& \vdots					   & \vdots													\\
+				c_x^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  c_y^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  c_z^T(\vec{x}_{N_C}) \vec{u}_{N_C}
+			\end{bmatrix}
+\end{equation}
+which belongs to $\R^{N_C \times 3}$ and can be rewritten more compactly as:
+\begin{equation}
+	\nabla \vec{u} =
+	\begin{bmatrix}
+		\vec{C}_x \vec{u}  &  \vec{C}_y \vec{u}  &  \vec{C}_z \vec{u}
+	\end{bmatrix}
+\end{equation}
+where $\vec{u} \in \R^{N}$ is the vector composed by the field values on the $N$ RBF-FD nodes and all the matrices $C_x$, $C_y$ and $C_z$ are sparse rectangular matrices with $N_C$ rows and $N$ columns; the $i$-th row of matrix $C_x$ is formed by the elements of the vector $\vec{c}_x^T(\vec{x}_i)$ present in equation~\eqref{eqn:field_gradient_at_centroids} and in similar way the $i$-th rows of matrices $\vec{C}_y$ and $\vec{C}_z$ are also structured, where the elements of vectors $\vec{c}_y^T(\vec{x}_i)$ and $\vec{c}_z^T(\vec{x}_i)$ are used instead of those of vector $\vec{c}_x^T(\vec{x}_i)$.
+
+%TODO: togli il simbolo di vettore (il bold) dagli a. I singoli a sono reali non vettori
+By defining the three vectors:
+\begin{equation}
+	\vec{A}_x =
+	\begin{bmatrix}
+		\vec{a}_{1,x}   \\
+		\vdots			\\
+		\vec{a}_{N_C,x}
+	\end{bmatrix} \quad
+	\vec{A}_y =
+	\begin{bmatrix}
+		\vec{a}_{1,y}   \\
+		\vdots			\\
+		\vec{a}_{N_C,y}
+	\end{bmatrix} \quad
+	\vec{A}_z =
+	\begin{bmatrix}
+		\vec{a}_{1,z}   \\
+		\vdots			\\
+		\vec{a}_{N_C,z}
+	\end{bmatrix}
+\end{equation}
+where the subscripts $x$, $y$, $z$ are used to indicate the elements in the first, second and third position of the vectors $\vec{a}_1, \dots, \vec{a}_{N_C}$, is then possible to rewrite the cost function $J$ as:
+\begin{equation}
+	\label{eqn:J_3D_compact_middle_step}
+	J = \frac{1}{\abs{A}} ( \vec{A}_x^T \vec{C}_x \vec{u} + \vec{A}_y^T \vec{C}_y \vec{u} + \vec{A}_z^T \vec{C}_z \vec{u})
+\end{equation}
+Additionally, defining the vector $\vec{k}^T = \vec{A}_x^T \vec{C}_x + \vec{A}_y^T \vec{C}_y + \vec{A}_z^T \vec{C}_z$, which belongs to equation~\eqref{eqn:J_3D_compact_middle_step} can be rewritten in an even more compact manner as:
+\begin{equation}
+	\label{eqn:J_3D_compact}
+	J = \frac{1}{\abs{A}} \vec{k}^T \vec{u}
+\end{equation}
+
+\smallskip
+For this specific case the design parameters $\vec{l} = [l_1, \dots, l_{N_{cp}}]$ are represented by the height of the control points of the triangulation which belongs to the surface on which the flux integral is approximated. In order to obtain the desired gradient of the cost function we can differentiate equation~\eqref{eqn:J_3D_compact} respect each design parameter. Doing so for the $i$-th parameter yields:
+\begin{equation}
+	\label{eqn:diff_J_3D_single_param_mid_step}
+	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} + \frac{1}{\abs{A}} \biggl( \frac{\partial \vec{k}^T}{\partial l_i} + \vec{k}^T \frac{\partial \vec{u}}{\partial l_i} \biggr)
+\end{equation}
+which once a distinction between the field values corresponding to internal and boundary nodes, denoted respectively as $\vec{u}_I$ and $\vec{u}_B$, is made can be rewritten as:
+\begin{equation}
+	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} + \frac{1}{\abs{A}} \biggl( \frac{\partial \vec{k}^T}{\partial l_i} + \vec{k}_I^T \frac{\partial \vec{u}_I}{\partial l_i} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i}\biggr)
+\end{equation}
+where $\vec{k}_I^T$ and $\vec{k}_B^T$ are the vectors made up of the elements of $\vec{k}^T$ associated respectively to $\vec{u}_I$ and $\vec{u}_B$.
+
+The term $\frac{\vec{u}_I}{\partial l_i}$ can be found in a similar way as done in the previous subsection in $1$D case: by differentiating the RBF-FD constraint. Doing so we obtain again:
+\begin{equation}
+	\frac{d\vec{C}_I}{d\vec{l}} \vec{u}_I + \vec{C}_I \frac{d\vec{u}_I}{d\vec{l}} + \frac{d\vec{C}_B}{d\vec{l}} \vec{u}_B + \vec{C}_B \frac{d\vec{u}_B}{d\vec{l}} =
+	\frac{d\vec{f}}{d\vec{l}}
+\end{equation}
+which once replaced in equation~\eqref{eqn:diff_J_3D_single_param_mid_step} gives:
+\begin{multline}
+	\label{eqn:diff_J_3D_single_param_before_global_adjoint}
+	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} \\ + \frac{1}{\abs{A}} \biggl[ \frac{\partial \vec{k}^T}{\partial l_i}\vec{u} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i} - \vec{k}_I^T \vec{C}_I^{-1} \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i}\biggr) \biggr]
+\end{multline}
+where matrix $\frac{\partial \vec{C}}{\partial l_i}$ is obtained by stacking vertically the matrices $\frac{\partial \vec{C}_I}{\partial l_i}$ and $\frac{\partial \vec{C}_B}{\partial l_i}$ whereas vector $\vec{u}$ is given by doing the same but with vectors $\vec{u}_I$ and $\vec{u}_B$.
+Then is possible to apply the adjoint method to compute the product $\vec{k}_I^T \vec{C}_I^{-1}$ which makes equation~\eqref{eqn:diff_J_3D_single_param_before_global_adjoint}:
+\begin{multline}
+	\label{eqn:diff_J_3D_single_param_after_global_adjoint}
+	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} \\ + \frac{1}{\abs{A}} \biggl[ \frac{\partial \vec{k}^T}{\partial l_i}\vec{u} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i} - \vec{\lambda}^T \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i}\biggr) \biggr]
+\end{multline}
+where $\vec{\lambda}$ is found by solving:
+\begin{equation}
+	\vec{C}_I^T \vec{\lambda} = \vec{k}_I
+\end{equation}
+
+%TODO: Aggiungi discorso su cosa rappresentano i 2 termini nell'equazione della sensibilità di J
+%TODO: Aggiungi cenno a come calcolare il primo termine nella parentesi tonda della sensibiiltà di J (aka d/dli 1/A)
+%TODO: Fixa la dimensione delle parentesi quadre falle un po' più grandi
+
+Now what remains to be computed are the $3$ unknown terms that appear within the square brackets of equation~\eqref{eqn:diff_J_3D_single_param_after_global_adjoint}. These are: $\frac{\partial \vec{k}^T}{\partial l_i}\vec{u}$, $\vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i}$ and $\Bigl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i} \Bigr)$.
+
+\medskip
+With regard to the term $\frac{\partial \vec{k}^T}{\partial l_i}\vec{u}$, we can take advantage of the equivalence between equations~\eqref{eqn:J_3D_compact_middle_step} and~\eqref{eqn:J_3D_compact} to write:
+\begin{equation}
+	\begin{split}
+		\frac{\partial \vec{k}^T}{\partial l_i}\vec{u} & = \frac{\partial}{\partial l_i} (\vec{A}_x^T\vec{C}_x + \vec{A}_y^T\vec{C}_y + \vec{A}_z^T\vec{C}_z) \vec{u}  \\
+													   & = \underbrace{\biggl( \frac{\partial \vec{A}_x^T}{\partial l_i}\vec{C}_x + \frac{\partial \vec{A}_y^T}{\partial l_i}\vec{C}_y + \frac{\partial \vec{A}_z^T}{\partial l_i}\vec{C}_z \biggr) \vec{u}}_{t_1}  \\
+													   &\qquad + \underbrace{\biggl( \vec{A}_x^T\frac{\partial \vec{C}_x}{\partial l_i} + \vec{A}_y^T\frac{\partial \vec{C}_y}{\partial l_i} + \vec{A}_z^T\frac{\partial \vec{C}_z}{\partial l_i}\biggr) \vec{u}}_{t_2}
+	\end{split}
+\end{equation}
+thus we only need to find the values of $t_1$ and $t_2$.
+In the $t_1$ case matrices $\vec{C}_x$, $\vec{C}_y$, $\vec{C}_z$ and the vector $\vec{u}$ are already known from the application of the global RBF-FD method, whereas the row vectors $\frac{\partial \vec{A}_x^T}{\partial l_i}$, $\frac{\partial \vec{A}_y^T}{\partial l_i}$ and $\frac{\partial \vec{A}_z^T}{\partial l_i}$ can be computed via automatic differentiation since they contain only geometrical information.
+Furthermore $t_1$ can be computed by accumulating the contributions $t_{1,j}$ of each sensitivity of the cost function with respect to each design parameter (i.e. triangle), which is given by
+\begin{equation}
+	t_{1,j} = \nabla\vec{u}(\vec{x_j})^T \frac{\partial \vec{a}_j}{\partial l_i}	
+\end{equation}
+
+$t_2$, on the other hand, can be computed by employing the adjoint method to the local RBF-FD systems. Following a similar approach to what was done for $t_1$, the contribution given by a single triangle to $t_2$ is given by:
+\begin{equation}
+	\label{eqn:t2j_in_3D_adjoint}
+	t_{2,j} = a_{j,x}\frac{\partial \vec{c}_x^T(\vec{x}_j)}{\partial l_i}\vec{u}_j + a_{j,y}\frac{\partial \vec{c}_y^T(\vec{x}_j)}{\partial l_i}\vec{u}_j + a_{j,z}\frac{\partial \vec{c}_z^T(\vec{x}_j)}{\partial l_i}\vec{u}_j
+\end{equation}
+Now we recall that $\vec{c}_x^T(\vec{x}_j)$ is found as solution of the following local RBF-FD system:
+\begin{equation}
+	\label{eqn:local_RBF-FD_system_adjoint_3D}
+	\vec{M}_{BC,j}^T \vec{c}_x(\vec{x}_j) =
+	\begin{bmatrix}
+		\mathcal{L} \Phi(\vec{x}_j, \mathcal{X}_{j,I})  \\
+		\mathcal{L} \vec{p}(\vec{x}_j)
+	\end{bmatrix}
+\end{equation}
+which means that $\frac{\partial \vec{c}_x(\vec{x}_j)}{\partial l_i}$ can be found differentiating the equation above respect the $j$-th design parameter, resulting in:
+\begin{equation}
+	\label{eqn:local_RBF-FD_system_differentited}
+	\frac{\partial \vec{c}_x(\vec{x}_j)}{\partial l_i} = \vec{M}_{BC,j}^{-T} \biggl( \frac{\partial \vec{h}_{j,x}}{\partial l_i} - \frac{\partial \vec{M}_{BC,j}^T}{\partial l_i}\vec{c}_x(\vec{x}_j) \biggr)
+\end{equation}
+where we have used the notation $\vec{h}_{j,x}$ to indicate the right-hand side of equation~\eqref{eqn:local_RBF-FD_system_adjoint_3D}.
+Substituting what we have just found into the equation~\eqref{eqn:t2j_in_3D_adjoint}, rearranging the result and then applying the adjoint method finally yields:
+\begin{multline}
+	t_{2,j} = \biggl( a_{j,x} \frac{\partial \vec{h}_{j,x}^T}{\partial l_i} + a_{j,y} \frac{\partial \vec{h}_{j,y}^T}{\partial l_i} + a_{j,z} \frac{\partial \vec{h}_{j,z}^T}{\partial l_i} \biggr) \vec{\lambda_{2,j}}  \\
+	 - \biggl( a_{j,x}\vec{c}_x^T(\vec{x}_j) + a_{j,y}\vec{c}_y^T(\vec{x}_j) + a_{j,z}\vec{c}_z^T(\vec{x}_j) \biggr) \frac{\partial \vec{M}_{BC,j}}{\partial l_i} \vec{\lambda_{2,j}}
+\end{multline}
+where $\vec{\lambda_{2,j}} \in \R^{m+M}$ is found by solving the adjoint system:
+\begin{equation}
+	\label{eqn:adjoint_system_t2j}
+	\vec{M}_{BC,j} \vec{\lambda_{2,j}} =
+	\begin{bmatrix}
+		\vec{u}_j  \\
+		\vec{0}
+	\end{bmatrix}
+\end{equation}
+
+\medskip
+The term $\vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i}$ does not require any particular arrangement except for the computation of $\frac{\partial \vec{u}_B}{\partial l_i}$ whose elements are found by applying the RBF-FD procedure. $\vec{k}_B^T$, on the other hand, can be found from its definition since $\vec{A}_x$, $\vec{A}_y$, $\vec{A}_z$ and $\vec{C}_x$, $\vec{C}_y$, $\vec{C}_z$ are known.
+
+\medskip
+The last term that remain to be computed, $\vec{\lambda}_1^T \Bigl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i} \Bigr)$, can be divided as follow:
+\begin{equation}
+	\vec{\lambda}_1^T \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i} \biggr) = \underbrace{\vec{\lambda}_1^T \frac{\partial \vec{C}}{\partial l_i} \vec{u}}_{t_1} + \underbrace{\vec{\lambda}_1^T \vec{C}_B \frac{\partial \vec{u}_B}{\partial l_i}}_{t_2}
+\end{equation}
+
+$t_2$ is composed by already known terms: $\vec{C}_B$ is found from the initial global RBF-FD application while the other two terms that comprise it have already been calculated during the previous steps; we do not dwell too much on it. $t_1$, on the other hand, deserve more attention since it requires to differentiate matrix $\vec{C}$ which is built row by row analyzing the stencil associated to each RBF-FD node.
+The contribution $t_{1,k}$ given by the $k$-th RBF-FD node to $t_1$ is found as:
+\begin{equation}
+	\label{eqn:t1k_in_3D_adjoint}
+	t_{1,k} = \lambda_{1,k} \frac{\partial \vec{c}^T(\vec{x}_K)}{\partial l_i} \vec{u}_k
+\end{equation}
+This makes clearer the relationship with the adjoint method applied in 1D case: the last two terms in equation~\eqref{eqn:t1k_in_3D_adjoint} made up the element $q_{k,i}$ of the matrix $\vec{Q}$ defined in equation~\eqref{eqn:Q_matrix_definition} of subsection~\ref{subsec:adjoint_method_RBF-FD_1D}. Thus repeating the passages reported in equations~(\ref{eqn:local_RBF-FD_system_adjoint_1D} -~\ref{eqn:Q_elems_before_adjoint}) we found that $t_{1,k}$ can be rewritten as:
+\begin{equation}
+	 t_{1,k} = \lambda_{1,k} \biggl( \frac{\partial \vec{h}}{\partial l_i} - \frac{\partial \vec{M}_{BC,k}^T}{\partial l_i} \vec{c}(\vec{x}_k) \biggr)^T \vec{M}_{BC,k}^{-1} \vec{u}_k
+\end{equation}
+and subsequently, by means of the adjoint vector $\vec{\lambda_{2,k}}$ as:
+\begin{equation}
+	t_{1,k} = \lambda_{1,k} \biggl( \frac{\partial \vec{h}}{\partial l_i} - \frac{\partial \vec{M}_{BC,k}^T}{\partial l_i} \vec{c}(\vec{x}_k) \biggr)^T \vec{\lambda}_{2,k}
+\end{equation}
+where $\vec{\lambda_{2,k}}$ is found by solving the system in~\eqref{eqn:adjoint_system_t2j} based on $k$-th, instead of the $j$-th, stenciil.
+
+%To efficiently calculate $t_1$, it is possible to use the adjoint method similarly to what has been done in the $1$D case: below we report the steps. We initially note that the contribution $t_{1,k}$ to $t_1$ given by the $k$-th RBF-FD node is given by:
+%\begin{equation}
+%	\label{eqn:t1k_in_3D_adjoint}
+%	t_{1,k} = \vec{\lambda}_{1,k} \frac{\partial \vec{c}^T(\vec{x}_k)}{\partial l_i} \vec{u}_k
+%\end{equation}
+%This makes clearer the relationship with the adjoint method applied in 1D case: the last two terms in equation~\eqref{eqn:t1k_in_3D_adjoint} made up the element in position 
+%The vector $\frac{\partial \vec{c}^T(\vec{x}_k)}{\partial l_i}$ is found differentiating the global RBF-FD constraint repeating the passages in a similar way as reported in equations]\eqref{eqn:local_RBF-FD_system_adjoint_3D} and~\eqref{eqn:local_RBF-FD_system_differentited} and once it is substituted in~\eqref{eqn:t1k_in_3D_adjoint} yields:
+%\begin{equation}
+%	
+%\end{equation}
+
+
+
+%TODO: Questa cosa del perché è possibile è meglio se la spieghi dopo aver spiegato tutti i passaggi o dopo essere arrivato alla ri-definizione  di q
+%this is indeed possible since $\frac{\partial \vec{C}}{\partial l_i} \vec{u}$ is nothing more than a row of the matrix $\vec{Q}$ defined in~\eqref{eqn:Q}
+
+%The description of the cost function obtained in equation~\eqref{eqn:J_3D_compact} is 
+%Now that we have described $J$ in a way that is easier to handle we can differentiate it respect a generic design parameter. . The gradient can be
+
+%we are eventually allowed to rewrite the cost function as 
+
+%If we concatenate by rows each $\nabla \vec{u}(\vec{x}_j)^T$ of the surface triangles we obtain a matrix $\nabla \vec{u} \in \R^{N_C \times 3}$ such that $N_C = \abs*{\mathcal{T}}$.
+%Combining the aforementioned rows we would obtain a matrix
+%is a row of the matrix $\nabla \vec{u} \in \R^{N_C \times 3}$ and consists on
+%The matrix is obtained by means of an RBF-FD approximation
+%$\nabla \vec{u} \in \R^{N \times 3}$ is a matrix whose $j$-th row, which we denote by $\nabla \vec{u}(\vec{x}_j)^T$, consists of the gradient of the field $u$ computed at point $\vec{x}_j$.
+%The aforementioned matrix $\nabla \vec{u}$ is obtained by means of three RBF-FD approximation
+%\begin{equation}
+%	\nabla \vec{u} = 
+%\end{equation}
+
+
+%By aacrivionmg om some subset of he traingle sof the domain is possible to modify the shape of the geometry nevertheless it is too hard for meIts shape can be modified by acting only on the heights of the vertices of some 
+%
+%Each triangle of the mesh will have its own vertices which occupy a point $\vec{x} \in\R^3$, by Its shape can be modified by acting on the height of a subset of vertices of the geometry
 
 
 
