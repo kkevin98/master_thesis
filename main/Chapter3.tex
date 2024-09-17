@@ -656,7 +656,7 @@ Since in practice the physical domains are typically described by means of \verb
 \end{equation}
 where $\abs{A} \in \R$ is still the area of the surface $A$, this time computed as sum of the areas of each small stl triangle that composes it, $\mathcal{T}$ is the set of the indices of these triangles and each of them is identified by a single index $j$; $\vec{x}_j \in \R^3$ and $\vec{a}_j \in \R^3$ denotes respectively the centroid and the area vector of the $j$-th triangle, where $\vec{a}_j$ has direction given by the normal and modulus equal to the surface of the $j$-th triangle.
 $\nabla \vec{u}(\vec{x}_j)^T \in \R^3$ indicates the row-vector representing the gradient of the field $u$ computed at centroid $\vec{x}_j$.
-
+Furthermore, we recall that $J$ is a scalar field exactly as in the case reported in previous subsection, thus $J \colon \R^{N_I \times L} \to \R$, where $N_I$ is the number of RBF-FD nodes that lie inside the physical domain and $L$ is the number of design parameter that we are able to control; for this specific problem design parameters $\vec{l}$ are the heights of the vertices of the triangles that define surface $A$. Finally we denote with $N_C$ the number of stl triangles that made up surface $A$, thus $\abs{\mathcal{T}} = N_C$.
 
 % Aggiungi che lo stach di questi vettori poi ti da la matrice.
 
@@ -670,27 +670,41 @@ $\nabla \vec{u}(\vec{x}_j)^T \in \R^3$ indicates the row-vector representing the
 %	\end{bmatrix}
 %\end{equation}
 %which require the creation of a stencil $\mathcal{X}_j$ centered at centroid $\vec{x}_j$. To do so an initial application of the RBF-FD method is required in order to have 
-Before proceeding we point out how $\nabla \vec{u}(\vec{x}_j)^T$ is computed. At first one might think to obtain it using the RBF-FD method based on $N$ nodes scattered over the physical domain as explained in subsection~\vref{subsec:RBF-FD_formulation}. However this is not the right approach, in fact by following the aforementioned procedure is possible to approximate the gradient on the RBF-FD nodes only and since the centroids of the triangles are independent from the latter another approach is required. 
-
-After an initial application of the RBF-FD method based on $N$ nodes scattered all over the physical domain, which are, in general, unrelated to the triangular centroids, the row vector $\nabla \vec{u}(\vec{x}_j)^T$ can be found through another local RBF-FD approximation as:
+Before proceeding we point out how $\nabla \vec{u}(\vec{x}_j)^T$ is computed. At first one might think to obtain it using the RBF-FD method based on the $N$ nodes scattered over the physical domain as explained in subsection~\vref{subsec:RBF-FD_formulation}. However this is not the right approach, in fact by following the aforementioned procedure is possible to approximate the gradient on the RBF-FD nodes only and since the centroids of the triangles are independent from the latter another approach is required. RBF-FD method it is still a way to go since by considering the stencil $\mathcal{X}_j$ centered on $\vec{x}_j$ is possible to refer back to equation~\eqref{eqn:FD_like_discretization_of_L} and then approximate $\nabla \vec{u}(\vec{x}_j)^T$ as:
 \begin{equation}
-	\nabla \vec{u}(\vec{x}_j)^T =
-	\begin{bmatrix}
-		c_x^T(\vec{x}_j) \vec{u}_j  &  c_y^T(\vec{x}_j) \vec{u}_j  &  c_z^T(\vec{x}_j) \vec{u}_j
-	\end{bmatrix}
+	\begin{split}
+		\nabla \vec{u}(\vec{x}_j)^T & =
+		\begin{bmatrix}
+			\frac{\partial}{\partial x} u(\vec{x}_j)  &  \frac{\partial}{\partial y} u(\vec{x}_j)  &  \frac{\partial}{\partial z} u(\vec{x}_j)
+		\end{bmatrix} \\
+									& =
+										\begin{bmatrix}
+											\vec{c}_x^T(\vec{x}_j) \vec{u}_j  &  \vec{c}_y^T(\vec{x}_j) \vec{u}_j  &  \vec{c}_z^T(\vec{x}_j) \vec{u}_j
+										\end{bmatrix}
+	\end{split}
 \end{equation}
-which require the creation of a stencil $\mathcal{X}_j$ centered at $\vec{x}_j$. The $m$ neighboring nodes that constitute it are taken from those used in the first RBF-FD application. $\vec{u}_j \in \R^m$ is the vector with the values of the field $u$ at the nodes of the stencil and $c_x^T(\vec{x}_j)$, $c_y^T(\vec{x}_j)$ and $c_z^T(\vec{x}_j)$ are the vectors composed by the first $m$ coefficients obtained from the solution of equation~\eqref{eqn:row_of_C_system_in_RBF-HFD} respectively when the associated differential operator $\mathcal{L}$ in the equation is $\partial / \partial x$, $\partial / \partial y$ or $\partial / \partial z$.
+where $\vec{u}_j \in \R^m$ is the vector containing the field values at the points of stencil $ \mathcal{X}_j$ while $\vec{c}_x^T(\vec{x}_j)$, $\vec{c}_y^T(\vec{x}_j)$ and $\vec{c}_z^T(\vec{x}_j)$ are the vectors composed by the first $m$ coefficients obtained from the solution of equation~\eqref{eqn:row_of_C_system} respectively when the associated differential operator $\mathcal{L}$ in the equation is $\partial / \partial x$, $\partial / \partial y$ or $\partial / \partial z$.
 
-%TODO: magari specifica che c_x non è esattamente lo stesso c che abbiamo trovato nel capitolo RBF-FD, qui non abbiamo gli elementi associati al polinomio
-%TODO: aggiungi 2 parole sul problema di ottenere nablau(xj) dato che xj non appartiene ai nodi RBF-FD è richijesto un altro giro di RBF-FD
-If we further concatenate along rows the vectors $\nabla \vec{u}(\vec{x}_j)^T$ associated to each triangle we would obtain the matrix:
+%After an initial application of the RBF-FD method based on $N$ nodes scattered all over the physical domain, which are, in general, unrelated to the triangular centroids, the row vector $\nabla \vec{u}(\vec{x}_j)^T$ can be found through another local RBF-FD approximation as:
+%\begin{equation}
+%	\nabla \vec{u}(\vec{x}_j)^T =
+%	\begin{bmatrix}
+%		c_x^T(\vec{x}_j) \vec{u}_j  &  c_y^T(\vec{x}_j) \vec{u}_j  &  c_z^T(\vec{x}_j) \vec{u}_j
+%	\end{bmatrix}
+%\end{equation}
+%which require the creation of a stencil $\mathcal{X}_j$ centered at $\vec{x}_j$. The $m$ neighboring nodes that constitute it are taken from those used in the first RBF-FD application. $\vec{u}_j \in \R^m$ is the vector with the values of the field $u$ at the nodes of the stencil and $c_x^T(\vec{x}_j)$, $c_y^T(\vec{x}_j)$ and $c_z^T(\vec{x}_j)$ are the vectors composed by the first $m$ coefficients obtained from the solution of equation~\eqref{eqn:row_of_C_system_in_RBF-HFD} respectively when the associated differential operator $\mathcal{L}$ in the equation is $\partial / \partial x$, $\partial / \partial y$ or $\partial / \partial z$.
+
+%TODO: magari specifica che c_x non è esattamente lo stesso c che abbiamo trovato nel capitolo RBF-FD, qui lostencil contiene anche il punto del vertice del triangolo
+%TODO: aggiungi 2 parole sul problema di ottenere nablau(xj) dato che xj non appartiene ai nodi RBF-FD è richijesto un altro giro di RBF-FD (da chiarire questo passaggio)
+%TODO:     cioè sottolinea il fatto che un giro di global RBF-FD è necessario
+Moving forward, if we further concatenate along rows the vectors $\nabla \vec{u}(\vec{x}_j)^T$ associated to each triangle we would obtain the matrix:
 \begin{equation}
 	\label{eqn:field_gradient_at_centroids}
 		\nabla \vec{u} =
 			\begin{bmatrix}
-				c_x^T(\vec{x}_1) \vec{u}_1  &  c_y^T(\vec{x}_1) \vec{u}_1  &  c_z^T(\vec{x}_j) \vec{u}_j  							\\
-				\vdots						& \vdots					   & \vdots													\\
-				c_x^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  c_y^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  c_z^T(\vec{x}_{N_C}) \vec{u}_{N_C}
+				\vec{c}_x^T(\vec{x}_1) \vec{u}_1  			  &  \vec{c}_y^T(\vec{x}_1) \vec{u}_1  		   &  \vec{c}_z^T(\vec{x}_j) \vec{u}_j  							\\
+				\vdots									  & \vdots					   		 		   & \vdots															\\
+				\vec{c}_x^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  \vec{c}_y^T(\vec{x}_{N_C}) \vec{u}_{N_C}  &  \vec{c}_z^T(\vec{x}_{N_C}) \vec{u}_{N_C}
 			\end{bmatrix}
 \end{equation}
 which belongs to $\R^{N_C \times 3}$ and can be rewritten more compactly as:
@@ -700,54 +714,53 @@ which belongs to $\R^{N_C \times 3}$ and can be rewritten more compactly as:
 		\vec{C}_x \vec{u}  &  \vec{C}_y \vec{u}  &  \vec{C}_z \vec{u}
 	\end{bmatrix}
 \end{equation}
-where $\vec{u} \in \R^{N}$ is the vector composed by the field values on the $N$ RBF-FD nodes and all the matrices $C_x$, $C_y$ and $C_z$ are sparse rectangular matrices with $N_C$ rows and $N$ columns; the $i$-th row of matrix $C_x$ is formed by the elements of the vector $\vec{c}_x^T(\vec{x}_i)$ present in equation~\eqref{eqn:field_gradient_at_centroids} and in similar way the $i$-th rows of matrices $\vec{C}_y$ and $\vec{C}_z$ are also structured, where the elements of vectors $\vec{c}_y^T(\vec{x}_i)$ and $\vec{c}_z^T(\vec{x}_i)$ are used instead of those of vector $\vec{c}_x^T(\vec{x}_i)$.
+where $\vec{u} \in \R^{N}$ is the vector composed by the field values on the $N$ RBF-FD nodes and all the matrices $\vec{C}_x$, $\vec{C}_y$ and $\vec{C}_z$ are sparse rectangular matrices with $N_C$ rows and $N$ columns; the $i$-th row of matrix $\vec{C}_x$ is formed by the elements of the vector $\vec{c}_x^T(\vec{x}_i)$ present in equation~\eqref{eqn:field_gradient_at_centroids} and in similar way the $i$-th rows of matrices $\vec{C}_y$ and $\vec{C}_z$ are also structured, where the elements of vectors $\vec{c}_y^T(\vec{x}_i)$ and $\vec{c}_z^T(\vec{x}_i)$ are used instead of those of vector $\vec{c}_x^T(\vec{x}_i)$.
 
-%TODO: togli il simbolo di vettore (il bold) dagli a. I singoli a sono reali non vettori
-By defining the three vectors:
+By defining the following three vectors:
 \begin{equation}
 	\vec{A}_x =
 	\begin{bmatrix}
-		\vec{a}_{1,x}   \\
+		a_{1,x}   \\
 		\vdots			\\
-		\vec{a}_{N_C,x}
+		a_{N_C,x}
 	\end{bmatrix} \quad
 	\vec{A}_y =
 	\begin{bmatrix}
-		\vec{a}_{1,y}   \\
+		a_{1,y}   \\
 		\vdots			\\
-		\vec{a}_{N_C,y}
+		a_{N_C,y}
 	\end{bmatrix} \quad
 	\vec{A}_z =
 	\begin{bmatrix}
-		\vec{a}_{1,z}   \\
+		a_{1,z}   \\
 		\vdots			\\
-		\vec{a}_{N_C,z}
+		a_{N_C,z}
 	\end{bmatrix}
 \end{equation}
-where the subscripts $x$, $y$, $z$ are used to indicate the elements in the first, second and third position of the vectors $\vec{a}_1, \dots, \vec{a}_{N_C}$, is then possible to rewrite the cost function $J$ as:
+where the subscripts $x$, $y$, $z$ accompanying $a_1, \dots, a_{N_C}$ are used to indicate the elements in the first, second and third position of the vectors $\vec{a}_1, \dots, \vec{a}_{N_C}$, is then possible to rewrite the cost function $J$ as:
 \begin{equation}
 	\label{eqn:J_3D_compact_middle_step}
 	J = \frac{1}{\abs{A}} ( \vec{A}_x^T \vec{C}_x \vec{u} + \vec{A}_y^T \vec{C}_y \vec{u} + \vec{A}_z^T \vec{C}_z \vec{u})
 \end{equation}
-Additionally, defining the vector $\vec{k}^T = \vec{A}_x^T \vec{C}_x + \vec{A}_y^T \vec{C}_y + \vec{A}_z^T \vec{C}_z$, which belongs to equation~\eqref{eqn:J_3D_compact_middle_step} can be rewritten in an even more compact manner as:
+Additionally, defining the vector $\vec{k}^T = \vec{A}_x^T \vec{C}_x + \vec{A}_y^T \vec{C}_y + \vec{A}_z^T \vec{C}_z$, which belongs to $\R^{N}$ equation~\eqref{eqn:J_3D_compact_middle_step} can be rewritten in an even more compact manner as:
 \begin{equation}
 	\label{eqn:J_3D_compact}
 	J = \frac{1}{\abs{A}} \vec{k}^T \vec{u}
 \end{equation}
 
 \smallskip
-For this specific case the design parameters $\vec{l} = [l_1, \dots, l_{N_{cp}}]$ are represented by the height of the control points of the triangulation which belongs to the surface on which the flux integral is approximated. In order to obtain the desired gradient of the cost function we can differentiate equation~\eqref{eqn:J_3D_compact} respect each design parameter. Doing so for the $i$-th parameter yields:
+Now that we have rewritten the cost function in a more convenient way we can compute its gradient. To do so we have to differentiate equation~\eqref{eqn:J_3D_compact} respect each design parameter; focusing on the $i$-th parameter we obtain the following derivative:
 \begin{equation}
 	\label{eqn:diff_J_3D_single_param_mid_step}
 	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} + \frac{1}{\abs{A}} \biggl( \frac{\partial \vec{k}^T}{\partial l_i} + \vec{k}^T \frac{\partial \vec{u}}{\partial l_i} \biggr)
 \end{equation}
-which once a distinction between the field values corresponding to internal and boundary nodes, denoted respectively as $\vec{u}_I$ and $\vec{u}_B$, is made can be rewritten as:
+which once a distinction between the field values corresponding to internal and boundary nodes, denoted respectively as $\vec{u}_I \in \R^{N_I}$ and $\vec{u}_B \in \R^{N_B}$, is made, can be rewritten as:
 \begin{equation}
 	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} + \frac{1}{\abs{A}} \biggl( \frac{\partial \vec{k}^T}{\partial l_i} + \vec{k}_I^T \frac{\partial \vec{u}_I}{\partial l_i} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i}\biggr)
 \end{equation}
 where $\vec{k}_I^T$ and $\vec{k}_B^T$ are the vectors made up of the elements of $\vec{k}^T$ associated respectively to $\vec{u}_I$ and $\vec{u}_B$.
 
-The term $\frac{\vec{u}_I}{\partial l_i}$ can be found in a similar way as done in the previous subsection in $1$D case: by differentiating the RBF-FD constraint. Doing so we obtain again:
+The term $\partial\vec{u}_I/\partial l_i$ can be found in a similar way as done in the previous subsection in $1$D case: differentiating the RBF-FD constraint reported in equation~\eqref{eqn:compact_discretized_PDE}. Doing so we obtain again:
 \begin{equation}
 	\frac{d\vec{C}_I}{d\vec{l}} \vec{u}_I + \vec{C}_I \frac{d\vec{u}_I}{d\vec{l}} + \frac{d\vec{C}_B}{d\vec{l}} \vec{u}_B + \vec{C}_B \frac{d\vec{u}_B}{d\vec{l}} =
 	\frac{d\vec{f}}{d\vec{l}}
@@ -757,16 +770,17 @@ which once replaced in equation~\eqref{eqn:diff_J_3D_single_param_mid_step} give
 	\label{eqn:diff_J_3D_single_param_before_global_adjoint}
 	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} \\ + \frac{1}{\abs{A}} \biggl[ \frac{\partial \vec{k}^T}{\partial l_i}\vec{u} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i} - \vec{k}_I^T \vec{C}_I^{-1} \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i}\biggr) \biggr]
 \end{multline}
-where matrix $\frac{\partial \vec{C}}{\partial l_i}$ is obtained by stacking vertically the matrices $\frac{\partial \vec{C}_I}{\partial l_i}$ and $\frac{\partial \vec{C}_B}{\partial l_i}$ whereas vector $\vec{u}$ is given by doing the same but with vectors $\vec{u}_I$ and $\vec{u}_B$.
+where matrix $\partial \vec{C} / \partial l_i$ is obtained by stacking vertically the matrices $\partial \vec{C}_I / \partial l_i$ and $\partial \vec{C}_B / \partial l_i$ whereas vector $\vec{u}$ is given by doing the same but with vectors $\vec{u}_I$ and $\vec{u}_B$.
 Then is possible to apply the adjoint method to compute the product $\vec{k}_I^T \vec{C}_I^{-1}$ which makes equation~\eqref{eqn:diff_J_3D_single_param_before_global_adjoint}:
 \begin{multline}
 	\label{eqn:diff_J_3D_single_param_after_global_adjoint}
-	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} \\ + \frac{1}{\abs{A}} \biggl[ \frac{\partial \vec{k}^T}{\partial l_i}\vec{u} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i} - \vec{\lambda}^T \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i}\biggr) \biggr]
+	\frac{\partial J}{\partial l_i} = \biggl( \frac{\partial}{\partial l_i} \abs{A}^{-1} \biggr) \vec{k}^T \vec{u} \\ + \frac{1}{\abs{A}} \Biggl[ \frac{\partial \vec{k}^T}{\partial l_i}\vec{u} + \vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i} - \vec{\lambda}_1^T \biggl( \frac{\partial \vec{C}}{\partial l_i}\vec{u} + \vec{C}_B\frac{\partial \vec{u}_B}{\partial l_i}\biggr) \Biggr]
 \end{multline}
-where $\vec{\lambda}$ is found by solving:
+where $\vec{\lambda}_1$ is found by solving:
 \begin{equation}
-	\vec{C}_I^T \vec{\lambda} = \vec{k}_I
+	\vec{C}_I^T \vec{\lambda}_1 = \vec{k}_I
 \end{equation}
+and remain the same even when the derivative is computed respect a parameter different than $l_i$.
 
 %TODO: Aggiungi discorso su cosa rappresentano i 2 termini nell'equazione della sensibilità di J
 %TODO: Aggiungi cenno a come calcolare il primo termine nella parentesi tonda della sensibiiltà di J (aka d/dli 1/A)
@@ -783,14 +797,15 @@ With regard to the term $\frac{\partial \vec{k}^T}{\partial l_i}\vec{u}$, we can
 													   &\qquad + \underbrace{\biggl( \vec{A}_x^T\frac{\partial \vec{C}_x}{\partial l_i} + \vec{A}_y^T\frac{\partial \vec{C}_y}{\partial l_i} + \vec{A}_z^T\frac{\partial \vec{C}_z}{\partial l_i}\biggr) \vec{u}}_{t_2}
 	\end{split}
 \end{equation}
-thus we only need to find the values of $t_1$ and $t_2$.
-In the $t_1$ case matrices $\vec{C}_x$, $\vec{C}_y$, $\vec{C}_z$ and the vector $\vec{u}$ are already known from the application of the global RBF-FD method, whereas the row vectors $\frac{\partial \vec{A}_x^T}{\partial l_i}$, $\frac{\partial \vec{A}_y^T}{\partial l_i}$ and $\frac{\partial \vec{A}_z^T}{\partial l_i}$ can be computed via automatic differentiation since they contain only geometrical information.
-Furthermore $t_1$ can be computed by accumulating the contributions $t_{1,j}$ of each sensitivity of the cost function with respect to each design parameter (i.e. triangle), which is given by
+Therefore we only need to find the values of $t_1$ and $t_2$.
+In the $t_1$ case, matrices $\vec{C}_x$, $\vec{C}_y$, $\vec{C}_z$ and the vector $\vec{u}$ are already known from the application of the initial global RBF-FD method, whereas the row vectors $\partial \vec{A}_x^T / \partial l_i$, $\partial \vec{A}_y^T / \partial l_i$ and $\partial \vec{A}_z^T / \partial l_i$ can be computed via automatic differentiation since they contain only geometrical information.
+Alternatively, $t_1$ can be computed by accumulating the contributions $t_{1,j}$ of each sensitivity of the cost function with respect to each design parameter (i.e. triangle), which is given by
 \begin{equation}
 	t_{1,j} = \nabla\vec{u}(\vec{x_j})^T \frac{\partial \vec{a}_j}{\partial l_i}	
 \end{equation}
+where $\partial \vec{a}_j / \partial l_i$ can be computed by concatenating the elements in position $j$ of vectors $\partial \vec{A}_x^T / \partial l_i$, $\partial \vec{A}_y^T / \partial l_i$ and $\partial \vec{A}_z^T / \partial l_i$.
 
-$t_2$, on the other hand, can be computed by employing the adjoint method to the local RBF-FD systems. Following a similar approach to what was done for $t_1$, the contribution given by a single triangle to $t_2$ is given by:
+$t_2$, on the other hand, can be computed by applying the adjoint method to the local RBF-FD systems. Following a similar approach to what was done for $t_1$, the contribution given by a single triangle to $t_2$ is given by:
 \begin{equation}
 	\label{eqn:t2j_in_3D_adjoint}
 	t_{2,j} = a_{j,x}\frac{\partial \vec{c}_x^T(\vec{x}_j)}{\partial l_i}\vec{u}_j + a_{j,y}\frac{\partial \vec{c}_y^T(\vec{x}_j)}{\partial l_i}\vec{u}_j + a_{j,z}\frac{\partial \vec{c}_z^T(\vec{x}_j)}{\partial l_i}\vec{u}_j
@@ -804,7 +819,7 @@ Now we recall that $\vec{c}_x^T(\vec{x}_j)$ is found as solution of the followin
 		\mathcal{L} \vec{p}(\vec{x}_j)
 	\end{bmatrix}
 \end{equation}
-which means that $\frac{\partial \vec{c}_x(\vec{x}_j)}{\partial l_i}$ can be found differentiating the equation above respect the $j$-th design parameter, resulting in:
+which means that $\partial \vec{c}_x(\vec{x}_j) / \partial l_i$ can be found differentiating the equation above respect the $i$-th design parameter, resulting in:
 \begin{equation}
 	\label{eqn:local_RBF-FD_system_differentited}
 	\frac{\partial \vec{c}_x(\vec{x}_j)}{\partial l_i} = \vec{M}_{BC,j}^{-T} \biggl( \frac{\partial \vec{h}_{j,x}}{\partial l_i} - \frac{\partial \vec{M}_{BC,j}^T}{\partial l_i}\vec{c}_x(\vec{x}_j) \biggr)
@@ -824,6 +839,7 @@ where $\vec{\lambda_{2,j}} \in \R^{m+M}$ is found by solving the adjoint system:
 		\vec{0}
 	\end{bmatrix}
 \end{equation}
+once, irrespective of the number $L$ of design parameters.
 
 \medskip
 The term $\vec{k}_B^T \frac{\partial \vec{u}_B}{\partial l_i}$ does not require any particular arrangement except for the computation of $\frac{\partial \vec{u}_B}{\partial l_i}$ whose elements are found by applying the RBF-FD procedure. $\vec{k}_B^T$, on the other hand, can be found from its definition since $\vec{A}_x$, $\vec{A}_y$, $\vec{A}_z$ and $\vec{C}_x$, $\vec{C}_y$, $\vec{C}_z$ are known.
