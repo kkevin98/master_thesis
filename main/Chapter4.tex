@@ -84,40 +84,59 @@ The results after $30$ steps in the optimization procedure are shown in figure~\
 	\label{fig:opt_results_1D}
 \end{figure}
 
-while in figure~\ref{fig:opt_history_1D} are shown the dynamic of the cost function and of its gradient respect the design variable $b$.
-
 \begin{figure}
 	\centering
 	\subfloat[][\emph{Cost function values}]
-		{\includegraphics[width=.45\textwidth]{img/cost_vs_iter_1D.pdf}} \quad
+	{\includegraphics[width=.45\textwidth]{img/cost_vs_iter_1D.pdf}} \quad
 	\subfloat[][\emph{Cost function gradient values}]
-		{\includegraphics[width=.45\textwidth]{img/costGrad_vs_iter_1D.pdf}}
+	{\includegraphics[width=.45\textwidth]{img/costGrad_vs_iter_1D.pdf}}
 	\caption{Trajectories of the cost function and its gradient throughout the optimization process. The ordinates are on a logarithmic scale}
 	\label{fig:opt_history_1D}
 \end{figure}
 
+while in figure~\ref{fig:opt_history_1D} are shown the dynamic of the cost function and of its gradient respect the design variable $b$.
+
+%\begin{figure}
+%	\centering
+%	\subfloat[][\emph{Cost function values}]
+%		{\includegraphics[width=.45\textwidth]{img/cost_vs_iter_1D.pdf}} \quad
+%	\subfloat[][\emph{Cost function gradient values}]
+%		{\includegraphics[width=.45\textwidth]{img/costGrad_vs_iter_1D.pdf}}
+%	\caption{Trajectories of the cost function and its gradient throughout the optimization process. The ordinates are on a logarithmic scale}
+%	\label{fig:opt_history_1D}
+%\end{figure}
+
 
 
 \section{3D case}
+\label{sec:results_3D_case}
 
-Now we have $d=3$. The physical domain $\Omega$ is a cube and its faces are indicated with $\partial\Omega$. In particular $\partial\Omega$ is further partitioned in two subsets:
+Now the physical domain $\Omega$ consists of a square-based prism with a side length of $1$ and a height of $0.5$, its faces are indicated with $\partial\Omega$. In particular $\partial\Omega$ is further partitioned in two subsets:
 \begin{itemize}
-	\item $\partial\Omega_\textup{flux}$ which is formed by the north face of the cube;
+	\item $\partial\Omega_\textup{flux}$ which is formed by the north face of the prism;
 	\item $\partial\Omega_\textup{walls}$ which includes the remaining faces.
 \end{itemize}
-The Poisson equation associated to the cube is defined as:
+Figure~\ref{fig:3D_prism-shaped_domain} show a representation of the domain.
+
+\begin{figure}[htp]
+	\centering
+	\includegraphics[width=.5\textwidth]{img/3D_prism-shaped_domain}
+	\caption{Physical domain used for the $3$D Poisson equation. Boundaries $\partial\Omega_\textup{flux}$ and $\partial\Omega_\textup{walls}$ are highlighted in red and gray respectively}
+	\label{fig:3D_prism-shaped_domain}
+\end{figure}
+
+The Poisson equation associated to the geometry is defined as:
 \begin{equation}
 	\label{eqn:3D_BV_problem}
 	\begin{cases}
-		\Delta u(\vec{x}) = - \omega^2 f(\vec{x})  &  \text{in $\Omega$}  \\
-		\frac{\partial}{\partial \vec{n}} u(\vec{x}) = \nabla f(\vec{x}) \cdot \vec{n}(\vec{x})  &  \text{in $\partial\Omega_\textup{walls}$}  \\
-		u(\vec{x}) = f(\vec{x})  &  \text{in $\partial\Omega_\textup{flux}$}  \\
+		\Delta u = - \omega^2 f  &  \text{in $\Omega$}  \\
+		\frac{\partial u}{\partial \vec{n}} = \frac{\partial u}{\partial \vec{n}}  &  \text{in $\partial\Omega_\textup{walls}$}  \\
+		u = f  &  \text{in $\partial\Omega_\textup{flux}$}  \\
 	\end{cases}
 \end{equation}
-where $x$, $y$ and $z$ are the positions of the point $\vec{x} \in \Omega\cup\partial\Omega$ in space, $\vec{n}(\vec{x})$ is the surface normal of the points $\vec{x}$ which belongs to the boundary and ``$\cdot$'' is the scalar product; we also set $f(\vec{x}) = \sin(\omega x)\sin(\omega y)\sin(\omega z)$ and $\omega = 2\pi$.
+where $\vec{n}$ is the surface normal at the boundary and $f$ is defined as $f(\vec{x}) = \sin(\omega x)\sin(\omega y)\sin(\omega z)$, with $\vec{x} \in \Omega\cup\partial\Omega$ being a point in space with coordinates $x$, $y$ and $z$, and $\omega = 2\pi$. 
 
-
-The problem under consideration allows for various physical interpretations: if we consider $f$ as a generic source of heat in the cube, the aforementioned problem constrain the temperature of the north face to be constant and to follow a profile defined by $f$ (Dirichlet BC) and the heat flux of the other faces to be constant and dependent on the heat source (Neumann BC); by solving it we obtain the temperature values within the domain.
+The problem under consideration allows for various physical interpretations: if we consider $u$ as the temperature and $-\omega^2 f$ as a generic heat source, the aforementioned problem constrains the temperature of the north face to be constant and to follow a profile defined by $f$ (Dirichlet BC), and impose a prescribed heath flux on the other faces (Neumann BC); by solving it we obtain the temperature values within the domain.
 
 On top of the boundary value problem~\eqref{eqn:3D_BV_problem} a design optimization problem is subsequently formulated: we want to maximize the flux through the north wall per unit area by modifying the shape of the wall itself. This is the problem that we are going to solve in this section. The associated cost function can be defined in a similar way as was done in subsection~\vref{subsec:adjoint_method_RBF-FD_3D}:
 \begin{equation}
@@ -125,25 +144,27 @@ On top of the boundary value problem~\eqref{eqn:3D_BV_problem} a design optimiza
 	J_c = \frac{1}{\abs{\partial\Omega_\text{flux}}} \int_{\partial\Omega_\textup{flux}} \frac{\partial u}{\partial \vec{n}} \, ds
 \end{equation}
 where $\abs{\partial\Omega_\text{flux}} \in \R$ is the area of the surface defined by $\partial\Omega_\text{flux}$.
-If we define the design variables as the height of each single point in $\partial\Omega_\text{flux}$ then we obtain an infinite-dimensional optimization problem which is infeasible to solve in practice.  %TODO: Da valutare il senso di questa frase visto che poi lo vai a risolvere con l'agiunto continuo
 
-In this case too a physical interpretation of the problem is possible: if we suppose we are dealing with a boundary value problem of thermodynamic nature, like in the example given earlier in this section, than the problem~\eqref{eqn:3D_design_opt_problem} is asking to find the best shape for the north face in order to maximize the heat transfer with the exterior of the cube.
+%TODO: Da valutare il senso di questa frase. Infatti in questo caso è meglio toglierla che metterla.
+%If we define the design variables as the height of each single point in $\partial\Omega_\text{flux}$ then we obtain an infinite-dimensional optimization problem which is infeasible to solve in practice.
+
+In this case too a physical interpretation of the problem is possible: if we suppose we are dealing with a heat conduction problem, like in the example given earlier in this section, than the problem~\eqref{eqn:3D_design_opt_problem} is asking to find the best shape for the north face in order to maximize the average heat flux density with the exterior of the prism.
 
 \medskip
-However, in our case the geometry is not described by means of continuous quantities and it is separately defined in a \verb|.stl| file which characterize the cube's surface using a triangular mesh as it is shown in figure~\ref{fig:3D_cube_stl_initial}.
+However, in our case the geometry is not described by means of continuous quantities and it is separately defined in a \verb|.stl| file which characterize the surface of the prism using a triangular mesh as it is shown in figure~\ref{fig:3D_cube_stl_initial}.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=.5\textwidth]{img/3D_cube_as_stl_cropped_1}
-	\caption{Representation of the \texttt{.stl} file containing the cube used in the $3$D design optimization problem}
+	\caption{Representation of the \texttt{.stl} file containing the prism used in the $3$D design optimization problem}
 	\label{fig:3D_cube_stl_initial}
 \end{figure}
 
-This means that in order to modify the shape of the north face of the cube we can act on the height of its triangles' control points (i.e. their vertices). Thus is useful to define the vector of the design variables as $\vec{l} = [l_1 \dots l_L]$ where $L \in \N$ is the number of triangle's vertices which belongs to $\partial\Omega_\textup{flux}$ and the $i$-th variable $l_i \in \R$ control the height $z_i$ of the $i$-th vertex belonging to $\partial\Omega_\textup{flux}$. Defining the design variables in this way allows to define a finite-dimensional optimization problem which requires the definition of a cost function based on the variables $\vec{l}$ in order to be solved. We defined this cost function, which aims to approximate the one presented in equation~\eqref{eqn:continuous_3D_cost_function_results}, as:
+This means that in order to modify the shape of the north face of the cube we can act on the height of its triangles control points (i.e. their vertices). Thus is useful to define the vector of the design variables as $\vec{l} = [l_1 \dots l_L]$ where $L \in \N$ is the number of triangle vertices which belongs to $\partial\Omega_\textup{flux}$ and the $i$-th variable $l_i \in \R$ control the height $z_i$ of the $i$-th vertex belonging to $\partial\Omega_\textup{flux}$. Defining the design variables in this way allows to define a finite-dimensional optimization problem which requires the definition of a cost function based on the variables $\vec{l}$ in order to be solved. We defined this cost function, which aims to approximate the one presented in equation~\eqref{eqn:continuous_3D_cost_function_results}, as:
 \begin{equation}
 	J = \frac{1}{\abs{A}} \sum_{j \in \mathcal{T}} \nabla \vec{u}(\vec{x}_j)^T \vec{a}_j
 \end{equation}
-where $\abs{A}$ is the area of $\partial\Omega_\textup{flux}$ computed as the sum of the areas of the triangles that belong to it, $\mathcal{T}$ is the set of the indices used to identify those triangles, $\nabla \vec{u}(\vec{x}_j)^T$ is the vector of the gradient of the field $u$ evaluated at $\vec{x}_j$, centroid of the $j$-th triangle, and $\vec{a}_j$ is the area vector of the $j$-th triangle which has direction given by its normal and modulus given by its surface.
+where $\abs{A}$ is the area of $\partial\Omega_\textup{flux}$ computed as the sum of the areas of the triangles that belong to it, $\mathcal{T}$ is the set of the indices used to identify those triangles, $\nabla \vec{u}(\vec{x}_j)^T$ is the gradient vector of the field $u$ evaluated at $\vec{x}_j$, centroid of the $j$-th triangle, and $\vec{a}_j$ is the area vector of the $j$-th triangle which has direction given by its normal and modulus given by its surface.
 Additionally the boundary value problem~\eqref{eqn:3D_BV_problem}, in general, must be discretized to be solved, doing so via RBF-HFD method yields the following constraint for the optimization:
 \begin{equation}
 	\label{eqn:3D_design_opt_constraint}
@@ -165,27 +186,28 @@ To solve problem~\eqref{eqn:3D_design_opt_problem} we have used a fixed number o
 \begin{equation}
 	\vec{l}_{k+1} = \vec{l}_k + \alpha \frac{\partial J}{\partial \vec{l}}
 \end{equation}
-where $\alpha$ is fixed to $0.1$ and the vector $\partial J / \partial \vec{l}$ is computed as explained in subsection~\ref{subsec:adjoint_method_RBF-FD_3D}.
+where $\alpha$ is fixed heuristically, by trial and error, to $0.1$ and the vector $\partial J / \partial \vec{l}$ is computed as explained in subsection~\ref{subsec:adjoint_method_RBF-FD_3D}.
 Constraint~\eqref{eqn:3D_design_opt_constraint}, on the other hand, is obtained employing the RBF-HFD method parametrized as follow:
 \begin{itemize}
-	\item The $N$ nodes are generated over the domain according to  ...
-	\item The $N$ RBF-FD nodes scattered over the domain are generated according to the technique presented in~\cite{Zamolo:phd_thesis} which yields isotropic node distributions where equal node spacing is obtained along all directions and node spacing varies in space in order to allow locally refined node distributions. Unlike the $1$D case, thanks to this technique, the number of nodes scattered across the cube varies as the physical domain changes throughout the optimization;
-	\item $\varphi(r) = \sqrt{1 + (\epsilon r)^2}$ Multiquadratic function used as basis function to define the RBF interpolant;
-	\item $P = 3$ as degree of the polynomial augmentation;
-	\item $m = 50$ as number of nodes which constitute a single stencil.  % Obtained from rbfParameters in solutionInteractive.jl in AdjointMeshlessCube
+	\item the $N$ RBF-FD nodes scattered over the domain are generated according to the technique presented in~\cite{Zamolo:phd_thesis} which yields isotropic node distributions where equal node spacing is obtained along all directions. Unlike the $1$D case, thanks to this technique, the number of nodes scattered across the cube varies as the physical domain changes throughout the optimization;
+	\item for the RBF basis we utilized the multiquadric function $\varphi(r) = \sqrt{1 + (\epsilon r)^2}$
+	\item the degree of the polynomial augmentation is set to $P = 3$
+	\item the number of nodes which constitute a single stencil is forced to $m = 50$.  % Obtained from rbfParameters in solutionInteractive.jl in AdjointMeshlessCube
 \end{itemize}
-The method also requires the solution of the sparse linear system reported in equation~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} for which we used the \verb|.bicgstabl()| function present in the julia package called \verb|IterativeSolvers.jl| setting \verb|GMRES|=2 and the left preconditioner \verb|Pl| to \verb|ilu_LHS|, where \verb|ilu_LHS| is the incomplete LU factorization of matrix $\vec{C}_I$ obtained via the \verb|ilu| function of the \verb|IncompleteLU.jl| julia package with the parameter $\boldsymbol{\tau}$ set to $6$.
+The method also requires the solution of the sparse linear system reported in equation~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} for which we used the \verb|bicgstabl()| function present in the julia package called \verb|IterativeSolvers.jl|\footnote{Julia open source library which provides iterative algorithms for solving linear systems, eigensystems, and singular value problems. The project can be found at~\url{https://iterativesolvers.julialinearalgebra.org/stable/}.} setting \verb|GMRES|=2 and the left preconditioner \verb|Pl| set to \verb|ilu_LHS|; this function is an implementation of the iterative solver found in~\cite{Sleijpen:bicgstabl_paper} to which we refer for further details along with the \verb|IterativeSolvers.jl| package documentation.
+As for the left preconditioner \verb|ilu_LHS|, it is the incomplete LU factorization of matrix $\vec{C}_I$ obtained via the \verb|ilu()| function of the \verb|IncompleteLU.jl|\footnote{Julia open source library which implements the Crout version of the incomplete LU factorization of a sparse matrix. The project can be found at~\url{https://github.com/haampie/IncompleteLU.jl}.} julia package with parameter $\boldsymbol{\tau}$ set to $6$. Its implementation is based on~\cite{NaLi:crout_ilu_paper}.
+When \verb|ilu_LHS| is passed as parameter to \verb|bicgstabl()|, it is used to pre-multiply on the left both sides of equation~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} so as to accelerate the convergence to the solution of the iterative solver.
 
 The results of the optimization, where the gradient at each step is computed employing the discreet adjoint method, are reported in figure~\ref{fig:opt_history_3D} where the values of the cost functions at each step are shown. Alongside, the values of the cost function obtained during the solution of the continuous design optimization problem solved through the continuous adjoint method are reported.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=.5\textwidth]{img/cost_vs_iter_3D_discrete_vs_continuous_adjoint}
+	\includegraphics[width=.75\textwidth]{img/cost_vs_iter_3D_discrete_vs_continuous_adjoint}
 %	\caption{Trajectories of the original (orange) and approximated (blue) cost functions throughout the optimization processes}
-	\caption{Trajectories of the cost functions associated to the optimization problems obtained considering a cube defined in a continuous domain (orange, solved via continuous adjoint) and the same cube defined by means of a \texttt{.stl} file (blue, solved via discrete adjoint)}
+	\caption{Trajectories of the cost functions associated to the optimization problems obtained considering a prism defined in a continuous domain (orange, solved via continuous adjoint) and the same prism defined by means of a \texttt{.stl} file (blue, solved via discrete adjoint)}
 	\label{fig:opt_history_3D}
 \end{figure}
-%TODO: Fixa la caption di questa figura
+%TODO: Fixa la caption di questa figura. Dopo aver fixato metti che l'arancione è un tratto continuo, mentre il blu è tratteggiato
 
 The deformations of surface $\partial\Omega_\textup{flux}$ at $4$ different times of the optimization are shown in figure~\ref{fig:3D_cube_shape_during_opt}.
 
@@ -199,11 +221,11 @@ The deformations of surface $\partial\Omega_\textup{flux}$ at $4$ different time
 	{\includegraphics[width=.45\textwidth]{img/3D_cube_as_stl_cropped_15}} \quad
 	\subfloat[][\emph{Surface after $N=50$ optimization steps}]
 	{\includegraphics[width=.45\textwidth]{img/3D_cube_as_stl_cropped_50}}
-	\caption{Deformation of the north face of the cube at different optimization times}
+	\caption{Deformation of the north face of the prism at different optimization times}
 	\label{fig:3D_cube_shape_during_opt}
 \end{figure}
 
 %TODO: Chiedi a Davide:
 %	0) Il problema di ottimizzazione infinito dimensionale è davvero un problema da risolvere?? E l'aggiunto continuo??
-%	1) Come vengono generati i nodi nel caso 3D, con quale tecnica??
-%	2) Errori di precompilazione nel programma quando carica il package Meshless
+%	3) ilu di IncompleteLU.jl su quale paper si basa?? Cercando su internet ne vengono fuori 2. Uno con e uno senza
+%	   pivotting. Nel dubbio ho citato quello con il pivotting che è più recente.
