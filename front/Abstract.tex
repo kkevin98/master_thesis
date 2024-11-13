@@ -1,3 +1,13 @@
 \chapter{Abstract}
 
-\lipsum[1]
+Computer Aided Engineering (CAE) systems are a type of software which aggregate numerical solvers for Partial Differential Equations (PDEs), $3$D CAD (Computer Aided Design) software, optimization algorithms and all the other software required for a complete assessment of the performance of a given engineering design and for its optimization. One of their most important field of application is Computational Fluid Dynamic (CFD).
+
+\medskip
+Nowadays the solvers integrated in CAE systems are typically based on Finite Element Method (FEM) or Finite Volume Method (FVM): their common ground is their need for domain discretization by means of a mesh. However the process of the mesh creation has several limitations which hinder the solver flexibility and its integration with the other software packages present in CAE systems.
+To overcome this limitation it is possible to use different solvers that does not rely on the creation of a mesh for solving the PDEs: these are called Meshless or Meshfree Methods (MMs).
+
+\medskip
+The goal of this thesis has been the implementation of an optimizer for one and three-dimensional design optimization problems based on simple models described by means of Poisson equations and solved by the Radial Basis Function-Finite Difference (RBF-FD) meshless method. To do so we studied the Automatic Differentiation (AD) and the adjoint method, and we implemented them on a gradient-based optimization algorithm.
+
+\medskip
+To asses the quality of the implemented method we applied it to a generic $1$D optimization problem and to a specific type of $3$D optimization problem. In the latter case we also compared the results obtained by our method to those obtained with the continuous adjoint.

@@ -1,0 +1,12 @@
+\chapter{Sommario}
+
+I sistemi di Computer Aided Engineering (CAE) sono un tipo di software che aggrega risolutori numerici per equazioni differenziali alle derivate parziali (PDE), software CAD (Computer Aided Design) 3D, algoritmi di ottimizzazione e tutto il resto dei software necessari per una valutazione completa delle prestazioni di un determinato progetto ingegneristico e per la sua ottimizzazione. Uno dei loro campi di applicazione più importanti è la Fluidodinamica Computazionale (CFD).
+
+\medskip
+Al giorno d'oggi, i risolutori di PDE integrati nei sistemi CAE si basano tipicamente sul metodo agli elementi finiti (FEM) o sul metodo a volumi finiti (FVM): ciò che li accomuna è la necessità di discretizzare il dominio attraverso una griglia (mesh-based). Tuttavia, il processo di creazione della griglia presenta diverse limitazioni che ostacolano la flessibilità del risolutore e la sua integrazione con gli altri pacchetti software presenti all'interno dei sistemi CAE. Per superare questa limitazione è possibile utilizzare risolutori di PDE che non si basano sulla creazione di una griglia: questi sono chiamati metodi senza griglia (meshless methods, MMs).
+
+\medskip
+L'obiettivo di questa tesi è stato l'implementazione di un ottimizzatore per problemi di ottimizzazione progettuale mono e tridimensionali per semplici modelli descritti tramite equazioni di Poisson e risolti con il metodo senza griglia chiamato Radial Basis Function-Finite Difference (RBF-FD). A tal fine, abbiamo studiato la Differenziazione Automatica (AD) e il metodo dell'aggiunto, implementandoli all'interno di un algoritmo di ottimizzazione basato sul gradiente.
+
+\medskip
+Per valutare la qualità del metodo implementato, lo abbiamo applicato a un problema di ottimizzazione generico in 1D e ad uno specifico problema di ottimizzazione in 3D. In quest'ultimo caso, abbiamo anche confrontato i risultati ottenuti dal nostro metodo con quelli ottenuti sfruttando l'aggiunto continuo.

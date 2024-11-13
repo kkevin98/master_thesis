@@ -1,4 +1,5 @@
 \chapter{RBF-FD method}
+\label{chap:RBF-FD_method}
 
 %TODO: Valuta se mettere i 2 punti davanti gli uguale quando definisci qualcosa facendolo cadere dall'alto
 
@@ -560,6 +561,11 @@ where rows of matrices $\vec{C}_I$ and $\vec{C}_B$ are formed by the elements of
 						c_{N_I+1}{(\vec{x}_{N_I})}  &  \dots  & c_{N}(\vec{x}_{N_I})
 					\end{bmatrix} \in \R^{N_I \times N_B}
 	\end{gathered}
+\end{equation}
+Equation~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} can also be rewritten more compactly as
+\begin{equation}
+	\label{eqn:compact_discretized_PDE}
+	\vec{C}_I \vec{u} = \vec{f} - \vec{C}_B \vec{u}_B
 \end{equation}
 What we just obtained in~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} is the algebraic system that once solved, in place of the PDE, gives the values of the PDE approximated solution $\Set{u^h(\vec{x}_1), \dots, u^h(\vec{x}_{N_I})}$. In Kansa's global method the process is followed with the same steps as long as the global expansion of equation~\eqref{eqn:Kansa_interpolan} is used to approximate the PDE solution instead of the local expansion of equation~\eqref{eqn:local_RBF-FD_interpolant}.
 

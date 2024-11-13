@@ -1,9 +1,10 @@
 \chapter{Results}
+\label{chap:results}
 
 In this chapter we will show the results obtained from the solution of two design optimization problems related to:
 \begin{itemize}
-	\item a simple $1$D segment;
-	\item the shape of a face of a cube.
+	\item the length of a simple $1$D segment;
+	\item the shape of a face of a prism.
 \end{itemize}
 These has been formulated as optimization problems and the adjoint method was used to compute the gradient of the corresponding cost functions throughout the optimization.
 
@@ -44,16 +45,17 @@ We decided to evaluate the results of the adjoint method applied to RBF-FD metho
 
 \section{1D case}
 
-In this case $d=1$. The physical domain is simply a segment and its boundary consists on its two endpoints that we indicate with $a$ and $b$, both belonging to $\R$. Therefore we have $\Omega =~]a,b[$ and $\partial\Omega = \Set{a, b}$.
+In this case we have $d=1$. The physical domain is simply a segment and its boundary consists on its two endpoints that we indicate with $a$ and $b$, both belonging to $\R$. Therefore we have $\Omega =~]a,b[$ and $\partial\Omega = \Set{a, b}$.
 For the remaining portion of the boundary value problem we define $f(x) = - \omega^2 \sin(x)$ and we impose the following homogeneous BCs: $u(a)=0$ and $u(b)=0$. Fixing the values $\omega=1$, $a=0$ and $b=\pi$ allows to rewrite the Poisson equation reported in~\eqref{eqn:Poisson_equation} as
 \begin{equation}
 	\label{eqn:Poisson_equation_1D}
 	\begin{cases}
-		- \Delta u(\vec{x}) = - \sin(x) & \text{in $]a,b[$}  \\
+		- \Delta u(\vec{x}) = - \sin(\vec{x}) & \text{in $]a,b[$}  \\
 		u(a) = 0  \\
 		u(b) = 0
 	\end{cases}
 \end{equation}
+%TODO: Prima scrivi l'equazione e poi spieghi tutte le lettere che ti sono capitate a tiro
 In order to find an approximated solution to the problem~\eqref{eqn:Poisson_equation_1D} we employ the RBF-FD method parametrized as follow:
 \begin{itemize}
 	\item $N=41$ evenly spaced nodes are used for domain discretization: $N_I=39$ are placed in $\Omega$ and the other $N_B=2$ are placed repsectivelly in $a$ and $b$;
@@ -148,7 +150,7 @@ where $\abs{\partial\Omega_\text{flux}} \in \R$ is the area of the surface defin
 %TODO: Da valutare il senso di questa frase. Infatti in questo caso è meglio toglierla che metterla.
 %If we define the design variables as the height of each single point in $\partial\Omega_\text{flux}$ then we obtain an infinite-dimensional optimization problem which is infeasible to solve in practice.
 
-In this case too a physical interpretation of the problem is possible: if we suppose we are dealing with a heat conduction problem, like in the example given earlier in this section, than the problem~\eqref{eqn:3D_design_opt_problem} is asking to find the best shape for the north face in order to maximize the average heat flux density with the exterior of the prism.
+In this case too a physical interpretation of the problem is possible: if we suppose we are dealing with a heat conduction problem, like in the example given earlier in this section, than problem~\eqref{eqn:3D_design_opt_problem} is asking to find the best shape for the north face in order to maximize the average heat flux density with the exterior of the prism.
 
 \medskip
 However, in our case the geometry is not described by means of continuous quantities and it is separately defined in a \verb|.stl| file which characterize the surface of the prism using a triangular mesh as it is shown in figure~\ref{fig:3D_cube_stl_initial}.
@@ -175,9 +177,9 @@ Therefore our overall design optimization problem reads as follow:
 \begin{equation}
 	\label{eqn:3D_design_opt_problem}
 	\begin{aligned}
-		\text{maximize} 		&  \quad J(\vec{u}, \vec{l})  									\\
-		\text{by varying} 		&  \quad \vec{l}, \vec{u}_I, \vec{u}_B							\\
-		\text{subject to}	 	&  \quad \vec{C}_I\vec{u}_I + \vec{C}_B\vec{u}_B = \vec{f}
+		\text{maximize} 		&  \quad J(\vec{u}, \vec{l})  										  \\
+		\text{by varying} 		&  \quad l_i  & \quad i=1, \dots, L    \\
+		\text{subject to}	 	&  \quad \vec{C}_I\vec{u}_I + \vec{C}_B\vec{u}_B - \vec{f} = \vec{0}  \\
 	\end{aligned}
 \end{equation}
 
@@ -198,18 +200,28 @@ The method also requires the solution of the sparse linear system reported in eq
 As for the left preconditioner \verb|ilu_LHS|, it is the incomplete LU factorization of matrix $\vec{C}_I$ obtained via the \verb|ilu()| function of the \verb|IncompleteLU.jl|\footnote{Julia open source library which implements the Crout version of the incomplete LU factorization of a sparse matrix. The project can be found at~\url{https://github.com/haampie/IncompleteLU.jl}.} julia package with parameter $\boldsymbol{\tau}$ set to $6$. Its implementation is based on~\cite{NaLi:crout_ilu_paper}.
 When \verb|ilu_LHS| is passed as parameter to \verb|bicgstabl()|, it is used to pre-multiply on the left both sides of equation~\eqref{eqn:discretized_version_of_PDE_using_RBF-FD} so as to accelerate the convergence to the solution of the iterative solver.
 
-The results of the optimization, where the gradient at each step is computed employing the discreet adjoint method, are reported in figure~\ref{fig:opt_history_3D} where the values of the cost functions at each step are shown. Alongside, the values of the cost function obtained during the solution of the continuous design optimization problem solved through the continuous adjoint method are reported.
+
+\subsection{Results}
+
+The results of the optimization, where the gradient at each step is computed employing the discreet adjoint method, are reported in figure~\ref{fig:opt_history_3D} where the values of the cost functions at each step are shown. In order to be sure of the correctness of the results we also compared them to the results obtained from the solution of the continuous optimization problem, which require the maximization of~\eqref{eqn:continuous_3D_cost_function_results} with constraints defined by the Poisson equation~\eqref{eqn:3D_BV_problem}.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=.75\textwidth]{img/cost_vs_iter_3D_discrete_vs_continuous_adjoint}
-%	\caption{Trajectories of the original (orange) and approximated (blue) cost functions throughout the optimization processes}
+	%	\caption{Trajectories of the original (orange) and approximated (blue) cost functions throughout the optimization processes}
 	\caption{Trajectories of the cost functions associated to the optimization problems obtained considering a prism defined in a continuous domain (orange, solved via continuous adjoint) and the same prism defined by means of a \texttt{.stl} file (blue, solved via discrete adjoint)}
 	\label{fig:opt_history_3D}
 \end{figure}
 %TODO: Fixa la caption di questa figura. Dopo aver fixato metti che l'arancione è un tratto continuo, mentre il blu è tratteggiato
 
-The deformations of surface $\partial\Omega_\textup{flux}$ at $4$ different times of the optimization are shown in figure~\ref{fig:3D_cube_shape_during_opt}.
+\smallskip
+Its solution is found by transforming the boundary integral in equation~\eqref{eqn:continuous_3D_cost_function} in a volume integral using the divergence theorem. In the thermal analogy this is equivalent to state that the sum of total heat fluxes at the boundaries of the domain equals the total internal heat generation, i.e. $-\omega^2 f$. This step from heat fluxes on the boundary to internally generated heat is what allows to express the objective~\eqref{eqn:continuous_3D_cost_function} indipendently on the state variables $\vec{u}$, making it depend only on the design variable $\vec{l}$.
+
+This simplified objective function can thus be used to provide a simple and reliable reference solution to the discrete optimization problem reported in~\eqref{eqn:3D_design_opt_problem}. We also remark that this simplified approach, which is called continuous adjoint, does not decrease the importance in the study of the RBF-FD model and discrete adjoint (the adjoint method covered in section~\vref{sec:adjoint_method}) since it can be applied to a very narrow class of problems such as the one under consideration.
+
+What can be observed from figure~\ref{fig:opt_history_3D} is a very precise agreement between the results obtained with the discrete and continuous cases which proves the validity of the discrete adjoint method for solving design optimization problem with simple gradient-based optimization algorithms similar to the one reported in equation~\eqref{eqn:our_update_rule_for_opt_problem}.
+
+The deformations of surface $\partial\Omega_\textup{flux}$ at $4$ different times of the optimization are instead shown in figure~\ref{fig:3D_cube_shape_during_opt}. In this case it can be noted that the convergence to the optimal design for the prism was very rapid since the northern surface had already converged to a shape similar to the final one after only $15$ iterations.
 
 \begin{figure}
 	\centering

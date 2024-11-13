@@ -1,13 +1,33 @@
 \chapter*{Conclusion}
-% Do not edit
+% --------- Do not edit ---------
 \addcontentsline{toc}{chapter}{Conclusion}
 \label{chap:concl}
 \markboth{CONCLUSION}{CONCLUSION}
+%--------------------------------
 
-\lipsum[1]
+The present study aims to investigate design optimization problems based on physical models whose behavior can be described by means of Poisson equation.
 
-\section{Lorem Ipsum}
-\lipsum[2-4]
+For the solution of the Poisson equations we decided to leverage on meshless methods, in particular RBF-FD and RBF-HFD methods, which are quickest approaches respect the standard Finite Element Methods (FEMs) or Finite Volume Methods (FVMs) and, even more importantly, does not ask the creation of a mesh which require a well trained operator in order to be created.
 
-\subsection{Dolor sit amet}
-\lipsum[5-7]
+We addressed the possibility to introduce:
+\begin{itemize}
+	\item Automatic Differentiation (AD), a family of techniques for evaluating derivatives of numeric functions expressed as computer programs which enable efficient and accurate computations;
+	\item adjoint method, a well established technique used in Computational Fluid Dynamics (CFD) design optimization based on FEMs and FVMs.
+\end{itemize}
+in simple $1$D and $3$D problems defined by us.
+After an introduction to the RBF-FD and RBF-HFD methods we analyzed the structure of design optimization problems. In particular we have shown how AD and adjoint method can be used for gradient-based optimization algorithms which require the computation of the gradient of the cost function.
+
+The mathematical steps shown are then subsequently implemented using the \verb*|Julia| programming language where we have used the \verb*|Zygote| library to implement the part related to the automatic differentiation. For the adjoint method, instead, the code has been written completely by us without using any pre-existent package.
+
+The implemented algorithms are then initially tested on a simple $1$D problem to test their correctness leading to the correct minimization of the defined objective function.
+After this case we also faced a $3$D optimization problem which, although simple, allowed for a physical interpretation related to thermal CFD. In this case we shown the correctness of our approach which has been compared with the continuous adjoint providing the same results.
+
+\medskip
+Beyond the good results achieved with the optimization problems faced on this work, further studies can be conducted regarding the topics discussed in this thesis:
+\begin{itemize}
+	\item test AD and adjoint method based on more complex models different from Poisson equations with more complex $3$D domains;
+	\item generalizing the proposed approach to more general objective functions in the $3$D case;
+	\item modify the implemented code so that it can be executed using multiple threads at once, thus reducing the computational time;
+	\item explore the possibility of using automatic differentiation, through the functions provided by \verb*|Zygote|, directly for the calculation of the objective function gradient.
+\end{itemize}
+
