@@ -1,21 +1,45 @@
 \chapter{Introduction}
-% Text goes here
-Spiegazione/storia mesh-based.
 
-Perché siamo arrivati ai meshless e differenze in generale
+The first research in the field of Computational Fluid Dynamic (CFD) began in the early 1950s. Subsequent to this initial research, a plethora of numerical methods have been devised for solving complex fluid dynamics phenomena modeled by Partial Differential Equations (PDEs), culminating in the contemporary state-of-the-art Finite Element Method (FEM) and Finite Volume Method (FVM). Despite the differences between the two methods they both require the creation of a mesh, i.e. the domain of interest, which could be the volume of an object, needs to be divided in small interconnected elements/cells. 
 
-Perché diff. automatica e aggiunto nel meshless
+The mesh generation phase should not be underestimated, indeed, even if generated with the help of a computer program, it is a complex task which has several drawbacks. First, it requires a huge amount of time, especially for complex geometries like those encountered in CFD simulations, and second, in most cases, it requires the intervention of a specialized operator. These facts are particularly penalizing in the case where these mesh-based solvers need to be integrated into Computer Aided Engineering (CAE) systems.
 
+\medskip
+CAE systems are a type of software whose goal is to aggregate every software tool required for a complete assessment of the performance of a given engineering design and for its optimization. Typically a set of design parameters which define a specific geometry are fed to a CAE system which uses them to generate the associated geometry. After the geometry creation, always the CAE system, discretizes it by means of a mesh generator, which may or may not require operator intervention; the mesh is subsequently fed to a mesh based solver for the necessary simulation which is then provided to a cost or objective function. From the output provided by the cost function, the CAE system, close the loop by using an optimization algorithm which modifies the design parameters, and thus the design itself, in order to minimize/maximize the cost function. In the aforementioned workflow often mesh generation is the more time-consuming task especially when it requires the intervention of an operator.
+Automatic mesh generator exists and may be used, but they impose constraints between computational efficiency and accuracy.
+%Furthermore their biggest problem is that since during the optimization the geometry is changed many times in a closed loop, the mesh quality worsens at every step with a consequent deterioration in the solver results, affecting the entire optimization cycle; at a certain point the mesh must be regenerated from scratch for the current design.
 
-%TODO: Outline
+\medskip
+In this scenario, in order to avoid all the issues related to mesh creation, Meshless or Meshfree methods (MMs), which date back to the $90$s~\cite{Idelsohn:to_mesh_or_not_to_mesh}, can be employed. These methods, as the name suggest, does not require the creation of a mesh, instead they just need a set of scattered nodes in the problem's domain.
+Beside the fact that domain discretization using nodes is faster and cheaper since mesh and human intervention are no longer required, and the existence of automatic node generators which deal with complex-shaped domain exists~\cite{Vlasiuk:node_generator,Zamolo:2D_node_generator} their main advantage is related to their integration in CAE systems: nodes can be easily moved in case the domain is affected by geometrical transformations like the ones performed by the optimization algorithms. Bearing this last advantage in mind it becomes clear how CAE systems can be greatly improved by replacing the meshing step with node generation and the mesh-based solver step with a meshless solver.
 
+In this thesis we focus on the Radial Basis Function-Finite Difference (RBF-FD) meshless methods and we show how they can be integrated in a CAE system in order to solve design optimization problems. To do so we developed a gradient-based optimization algorithm with improvements based on:
+\begin{itemize}
+	\item Automatic Differentiation (AD), a technique widely used in machine learning in particular for neural network training~\cite{Rumelhart:backpropagation_algo}; and
+	\item adjoint method a technique used in various disciplines as CFD and optimal control theory~\cite{Giles:adjoint_intro}.
+\end{itemize}
+The implemented optimization algorithm is then used to solve one and three dimensional simple design optimization problems.
+
+\bigskip
 The outline of this thesis is the following:
 \begin{description}
-	\item[Chapter~\ref{chap:meshless_methods}] introduces the Meshless Methods (MMs) by providing a clear definition of these methods.
-	\item[Chapter~\ref{chap:RBF-FD_method}] description
-	\item[Chapter~\ref{chap:adjoint_method_chapter}] description
-	\item[Chapter~\ref{chap:results}] description
+	\item[Chapter~\ref{chap:meshless_methods}] introduces the Meshless Methods (MMs) by providing a clear definition of these methods and a brief overview of their history. Their key aspects for solving Partial Differential Equations (PDEs) are also discussed, maintaining a general overview by refraining from delving too deeply into any single method.
+	
+	
+	\item[Chapter~\ref{chap:RBF-FD_method}] studies the Radial Basis Function-Finite Difference (RBF-FD) and the Radial Basis Functions-Hermite Finite Difference (RBF-HFD) which are two examples of meshless solvers. The latter is an enhanced version of the former which makes use of an Hermite interpolant (which makes use of derivatives of functions in addition to the function values alone) to approximate the solution of a generic PDE. In particular RBF-HFD turns out to be particularly useful for specific PDE boundary conditions.
+	
+	
+	\item[Chapter~\ref{chap:adjoint_method_chapter}] initially explain the different ways derivatives of functions can be computed focusing on Automatic Differentiation and its two main implementations: forward and reverse mode.
+	
+	Subsequently design optimization problems are faced emphasizing their structure and how they are solved, with a particular emphasis on problems based on RBF-FD models and on a simple gradient-based optimization algorithm.
+	
+	Lastly it is explained what the adjoint method consists of and how it can be applied to $1$D and $3$D RBF-FD based design optimization problems. In $1$D case general problems are faced, instead, in $3$D case, we restricted our implementation to problems dealing with flux integrals.
+	
+	\item[Chapter~\ref{chap:results}] shows the result of our optimization method applied to simple 1D and 3D problems modeled by means of Poisson equations. To show this it is presented the value of the objective functions which vary throughout the optimization as expected and in particular in the three dimensional case we compared the results obtained buy our (discrete) adjoint method to the results obtained by the continuous adjoint.
 \end{description}
 
-%TODO: Implemented code
-\subsection{Implemented code}
+\bigskip
+The code developed during the implementation of the optimization algorithm discussed in this thesis has been implemented using the \verb*|Julia|~\cite{Bezanson:Julia_programming_language} programming language.
+\verb*|Julia| was born in $2012$ as an open source project hosted on GitHub in order to mix the convenience of high-level dynamic languages such as \verb*|MATLAB|, \verb*|Octave| and \verb*|R| with the performance offered by \verb*|C| and \verb*|Fortran| languages.
+
+This programming language is mainly intended for algorithm development and data analysis in applied math, engineering and scientific computing and many libraries have already been developed for this purposes. An example of these is \verb*|Zygote| which we used to compute gradients using Automatic Differentiation (AD). Regarding the adjoint method we couldn't find any libraries that implemented it, so we had to write our own code for it. We also implemented the RBF-FD solver for the $1$D case whereas for the $3$D case we employed the one already developed internally at ESTECO.

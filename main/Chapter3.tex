@@ -1,11 +1,13 @@
-\chapter{Adjoint method}
+\chapter{Automatic Differentiation (AD) and adjoint method in optimization}
 \label{chap:adjoint_method_chapter}
 
-In this chapter we are going to discuss the adjoint method: a specific application of reverse mode automatic differentiation which allows to compute efficiently the gradient of a function which depends on many parameters.
+In this chapter we are going to discuss Automatic Differentiation (AD) and the adjoint method which are two techniques that allows to compute efficiently the gradient of a function which depends on many parameters. We also see how they can be used to improve the efficiency of gradient-based optimization algorithms.
 
-To do so we introduce to the possible techniques that allows to compute derivatives using a computer program with particular focus on Automatic Differentiation (AD), highlighting its advantages and its two main implementations.
-Subsequently, we will provide a brief overview of design optimization in order to justify the interest in implementing the aforementioned method.
-Finally, we conclude the chapter explaining in detail the application of the adjoint method in case of design optimization problems that rely on RBF-FD method for the design analysis stage.
+To do so we introduce to the possible techniques that allows to compute derivatives with a particular focus on Automatic Differentiation (AD), highlighting its advantages and its two main implementations.
+
+Subsequently, we will provide a brief overview of design optimization problems, in particular of those related to systems which are numerically described by RBF-FD methods.
+
+Finally, we conclude the chapter explaining in detail the application of the AD and the adjoint method to $1$D and $3$D RBF-FD based design optimization problems.
 
 \section{Automatic Differentiation (AD)}
 
@@ -739,7 +741,7 @@ Furthermore adjoint method also share a two-steps process with the reverse mode 
 
 After this concise overview of the adjoint method applied to generic design optimization problems, we now proceed to the next section where we examine in more detail its application to those problems where the state $\vec{u}$ is obtained solving a Partial Differential Equation by means of RBF-FD methods.
 
-\subsection{1D}
+\subsection{1D case}
 \label{subsec:adjoint_method_RBF-FD_1D}
 
 In this case we consider a generic cost function $J \colon \R^{N_I \times L} \to \R$ which depends on the $N_I$ values of the field $u$ at the points located within the physical domain and on the $L$ design parameters. The resulting optimization problem is:
@@ -949,7 +951,7 @@ In light of what we have observed we are now able to compute the whole gradient 
 
 %TODO: aggiungi un po' di dimensioni dei vettori in giro
 
-\subsection{3D}
+\subsection{3D case}
 \label{subsec:adjoint_method_RBF-FD_3D}
 
 Now, unlike in the 1D case, we consider only cost functions which describes a flux integral, i.e. functions that can be reduced into a form similar to:
